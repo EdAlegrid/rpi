@@ -1042,7 +1042,7 @@ static uint8_t i2c_slave_write_test(const char * buf, uint8_t len)
     	if(isBitSet(S, 8))
     	{
 		result = 0x01;  
-        	puts("i2c_select_slave() error: address not acknowledge by slave device");
+        	puts("i2c_select_slave() error: address not acknowledged by slave device");
     	}
   
     	/* write cycle is success */
