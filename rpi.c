@@ -1190,7 +1190,7 @@ uint8_t i2c_read(char* buf, uint8_t len)
     	{
 		result = 0x01;
 		printf("%s() error: ", __func__);
-        	puts("slave address not acknowledge");
+        	puts("slave address not acknowledged");
     	}
 
     	/* ERROR_CLKT, clock stretch timeout */
