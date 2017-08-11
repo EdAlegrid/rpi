@@ -1042,7 +1042,7 @@ static uint8_t i2c_slave_write_test(const char * buf, uint8_t len)
     	if(isBitSet(S, 8))
     	{
 		result = 0x01;  
-        	puts("slave address error - address not acknowledge by slave device.");
+        	puts("i2c_select_slave() error: address not acknowledge by slave device");
     	}
   
     	/* write cycle is success */
@@ -1051,7 +1051,7 @@ static uint8_t i2c_slave_write_test(const char * buf, uint8_t len)
     	}
 	else{
 		result = 0x04;
-	       	puts("slave write error - data transfer is not complete");
+	       	puts("i2c_select_slave() error: data transfer is not complete");
     	}
     
     	return result;
@@ -1068,8 +1068,7 @@ void i2c_select_slave(uint8_t addr)
 
     	/* check slave adress write error */
     	if(i2c_slave_write_test(buf, 1) > 0){
-		printf("%s() error: ", __func__);
-		puts("Please check slave device address or slave pin connection");
+		puts("Please check slave device address or slave pin connection.");
 	}
 }
 
