@@ -250,8 +250,9 @@ void rpi_init() {
         	base_pointer[i] = mmap(NULL, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, base_add[i]);
 
 		if (base_pointer[i] == MAP_FAILED) {
-                	perror("mmap(/dev/mem)");
+                	perror("mmap() error");
 			printf("%s() error: ", __func__);
+			puts("Invalid peripheral register base address");
 			exit(1);
         	}
 	
