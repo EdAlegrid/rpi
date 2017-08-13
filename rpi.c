@@ -1,5 +1,5 @@
 /*
- * This is a low-level Peripherals Control Library for ARM-based SBC's such as Raspberry Pi 1 model B+, 2, 3 and Pi Zero W.
+ * This is a low-level Peripherals Control Library for ARM-based SBC's such as Raspberry Pi 1 Model B+, 2, 3 and Pi Zero W.
  *
  * Copyright (c) 2017 Ed Alegrid <ealegrid@gmail.com>
  *
@@ -418,21 +418,15 @@ uint8_t gpio_read(uint8_t pin) {
 	return *GPLEV & set ? 1 : 0;
 }
 
-/*
- * Detect an input event from a GPIO pin.
- * The GPIO pin must be configured for a level or edge event detection.
- */
-uint8_t gpio_detect_input_event(uint8_t pin) { 
-	uint32_t mask = 1 << pin;
-        __sync_synchronize(); 
-	return *GPEDS & mask ? 1 : 0;
-}
-
-/*
- * Reset input pin event when an event is detected (using gpio_detect_input_event() function).   
- */
-void gpio_reset_event(uint8_t pin) {
-   	setBit(GPEDS, pin);
+/* Remove all configured event detection from a GPIO pin */
+void gpio_reset_all_events (uint8_t pin) {
+	clearBit(GPREN, pin);
+	clearBit(GPFEN, pin);
+        clearBit(GPHEN, pin);
+	clearBit(GPLEN, pin);
+        clearBit(GPAREN, pin);
+	clearBit(GPAFEN, pin);
+        setBit(GPEDS, pin);
 }
 
 /**************************
@@ -549,16 +543,21 @@ void gpio_enable_async_falling_event (uint8_t pin, uint8_t bit) {
     	}
 }
 
-/* Remove all configured event detection from a GPIO pin */
-void gpio_reset_all_events (uint8_t pin) {
-	clearBit(GPREN, pin);
-	clearBit(GPFEN, pin);
-        clearBit(GPHEN, pin);
-	clearBit(GPLEN, pin);
-        clearBit(GPAREN, pin);
-	clearBit(GPAFEN, pin);
-        setBit(GPEDS, pin);
+/*
+ * Detect an input event from a GPIO pin.
+ * The GPIO pin must be configured for a level or edge event detection.
+ */
+uint8_t gpio_detect_input_event(uint8_t pin) { 
+	uint32_t mask = 1 << pin;
+        __sync_synchronize(); 
+	return *GPEDS & mask ? 1 : 0;
 }
+
+/* Reset input pin event when an event is detected (using gpio_detect_input_event() function). */  
+void gpio_reset_event(uint8_t pin) {
+   	setBit(GPEDS, pin);
+}
+
 
 /* Enable internal PULL-UP/PULL-DOWN resistor for input pin
  * value = 1, 0x0 or 00b, Disable Pull-Up/Down, no PU/PD resistor will be used
@@ -709,14 +708,14 @@ static void set_clock_div(uint32_t div){
 /*
  * Set clock frequency using a divisor value
  */
-uint8_t pwm_set_clock_freq(uint32_t div) {
+uint8_t pwm_set_clock_freq(uint32_t divider) {
 
-	if( 0 < div && div < 4096){
-		set_clock_div(div);
+	if( 0 < divider && divider < 4096){
+		set_clock_div(divider);
 	}
 	else {
 		printf("%s() error: ", __func__);
-		puts("Invalid div value.");
+		puts("Invalid divider parameter value.");
 	} 
 	
 	/* set clock source to 19.2 MHz oscillator and enable */   
@@ -793,7 +792,7 @@ static void pwm_reg_ctrl(uint8_t n, uint8_t position){
  * n = 0 Disable
  * n = 1 Enable
  */
-void pwm_enable(uint8_t pin, uint32_t n){
+void pwm_enable(uint8_t pin, uint8_t n){
 
         // Channel 1
         if( pin == 18 || pin == 12) {	  // GPIO 18/12, PHY 12/32     
@@ -813,7 +812,7 @@ void pwm_enable(uint8_t pin, uint32_t n){
  * n = 0 PWM
  * n = 1 M/S
  */
-void pwm_set_mode(uint8_t pin, uint32_t n){
+void pwm_set_mode(uint8_t pin, uint8_t n){
 
         // Channel 1
         if( pin == 18 || pin == 12) {	  // GPIO 18/12, PHY 12/32     
@@ -833,7 +832,7 @@ void pwm_set_mode(uint8_t pin, uint32_t n){
  * n = 0 Normal
  * n = 1 Reverse
  */
-void pwm_set_pola(uint8_t pin, uint32_t n){
+void pwm_set_pola(uint8_t pin, uint8_t n){
 
         // Channel 1
         if( pin == 18 || pin == 12) {	  // GPIO 18/12, PHY 12/32     
@@ -1376,9 +1375,9 @@ void spi_set_data_mode(uint8_t mode){
 		setBit(SPI_CS, 2);	//CPHA 1
         	clearBit(SPI_CS, 3);    //CPOL 0
     	}
-    	else if(mode == 2){		//CPHA 0
-   		clearBit(SPI_CS, 2);	//CPOL 1
-		setBit(SPI_CS, 3);
+    	else if(mode == 2){		
+   		clearBit(SPI_CS, 2);	//CPHA 0
+		setBit(SPI_CS, 3);	//CPOL 1
     	}
     	else if(mode == 3){
 		clearBit(SPI_CS, 2);	//CPHA 1
@@ -1440,7 +1439,7 @@ void spi_set_chip_select_polarity(uint8_t cs, uint8_t active)
 
 
 /* Writes and reads a number of bytes to/from a slave device */
-void spi_data_transfer(char* wbuf, char* rbuf, uint32_t len)
+void spi_data_transfer(char* wbuf, char* rbuf, uint8_t len)
 {
 	volatile uint32_t* fifo = (uint32_t *)SPI_FIFO;
 
@@ -1485,8 +1484,8 @@ void spi_data_transfer(char* wbuf, char* rbuf, uint32_t len)
     	}
 }
 
-/* Writes a number of bytes to SPI davice */
-void spi_write(char* wbuf, uint32_t len)
+/* Writes a number of bytes to SPI device */
+void spi_write(char* wbuf, uint8_t len)
 {
     	volatile uint32_t* fifo = (uint32_t *)SPI_FIFO;
    
@@ -1511,7 +1510,7 @@ void spi_write(char* wbuf, uint32_t len)
 }
 
 /* read a number of bytes from SPI device */
-void spi_read(char* rbuf, uint32_t len)
+void spi_read(char* rbuf, uint8_t len)
 {
     	volatile uint32_t* fifo = (uint32_t *)SPI_FIFO;
    
