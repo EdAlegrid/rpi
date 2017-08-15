@@ -1057,12 +1057,12 @@ void i2c_select_slave(uint8_t addr)
 }
 
 /* Write a number of bytes to slave device */
-uint8_t i2c_write(const char * buf, uint8_t len)
+uint8_t i2c_write(const char * wbuf, uint8_t len)
 {
     	volatile uint32_t * dlen   	= (uint32_t *)DLEN;
     	volatile uint32_t * fifo   	= (uint32_t *)FIFO;
 
-    	uint8_t result = 0x0; // successful write data transfer, no error
+    	uint8_t result = 0; // successful write data transfer, no error
 
     	uint8_t i = 0;
 
@@ -1085,9 +1085,10 @@ uint8_t i2c_write(const char * buf, uint8_t len)
     
     	while(!isBitSet(S, 1))  // if DONE is 1, data transfer is complete
     	{
-        	while(isBitSet(S, 2))   //2 TXW = 0 FIFO is full, TXW = 1 FIFO has space for at least one byte 
+        	while(isBitSet(S, 2))   //2 TXW = 0 FIFO is full, TXW = 1 FIFO has space for at least one byte
+					// or 
     		{			//4 TXD = 0 FIFO is full, TXD = 1 FIFO has space for at least one byte 
-	    		*fifo = buf[i];
+	    		*fifo = wbuf[i];
 	    		i++;
     		}
     	}
@@ -1095,7 +1096,7 @@ uint8_t i2c_write(const char * buf, uint8_t len)
     	/* ERROR_NACK, slave addrress not acknowledge */
     	if(isBitSet(S, 8))
     	{
-		result = 0x01;
+		result = 1;
 		printf("%s() error: ", __func__);  
  		puts("Slave address not acknowledged.");
     	}
@@ -1103,7 +1104,7 @@ uint8_t i2c_write(const char * buf, uint8_t len)
     	/* ERROR_CLKT, clock stretch timeout. Received Clock Stretch Timeout */
     	if(isBitSet(S, 9))
     	{
-		result = 0x02;
+		result = 2;
 		printf("%s() error: ", __func__); 
         	puts("Clock stretch timeout.");
     	}
@@ -1111,7 +1112,7 @@ uint8_t i2c_write(const char * buf, uint8_t len)
     	/* Not all data is sent */
     	if (isBitSet(S, 2) || i < len) //4 TXW = 0 FIFO is full, TXW = 1 FIFO has space for at least one byte
     	{
-		result = 0x04;
+		result = 4;
 		printf("%s() error: ", __func__);
         	puts("Not all data is sent to slave device.");
     	}
@@ -1121,7 +1122,7 @@ uint8_t i2c_write(const char * buf, uint8_t len)
  		setBit(S, 1); //DONE, write transfer is complete
     	}
 	else{
-		result = 0x04;
+		result = 4;
 		printf("%s() error: ", __func__); 
         	puts("Data transfer is not complete.");
     	}
@@ -1130,7 +1131,7 @@ uint8_t i2c_write(const char * buf, uint8_t len)
 }
 
 /* Read a number of bytes from a slave device */
-uint8_t i2c_read(char* buf, uint8_t len)
+uint8_t i2c_read(char* rbuf, uint8_t len)
 {
     	volatile uint32_t * dlen 	= (uint32_t *)DLEN; 
     	volatile uint32_t * fifo    = (uint32_t *)FIFO;
@@ -1156,7 +1157,7 @@ uint8_t i2c_read(char* buf, uint8_t len)
     	{
         	while(isBitSet(S, 5) && i < len) //5 RXD = 0 fifo is empty, RXD = 1 still has data
     		{
-	    		buf[i] = *fifo;
+	    		rbuf[i] = *fifo;
  	    		i++;
     		}
     	}
@@ -1165,7 +1166,7 @@ uint8_t i2c_read(char* buf, uint8_t len)
  		setBit(S, 1); // if DONE is 1, data transfer is complete
     	}
 	else{
-		result = 0x04;
+		result = 4;
                 printf("%s() error: ", __func__);
         	puts("Data transfer is not complete.");
     	}
@@ -1173,7 +1174,7 @@ uint8_t i2c_read(char* buf, uint8_t len)
     	/* ERROR_NACK, slave addrress not acknowledge */
     	if(isBitSet(S, 8))
     	{
-		result = 0x01;
+		result = 1;
 		printf("%s() error: ", __func__);
         	puts("Slave address is not acknowledged.");
     	}
@@ -1181,7 +1182,7 @@ uint8_t i2c_read(char* buf, uint8_t len)
     	/* ERROR_CLKT, clock stretch timeout */
     	else if(isBitSet(S, 9))
     	{
-		result = 0x02;
+		result = 2;
 		printf("%s() error: ", __func__); 
         	puts("Clock stretch timeout.");
     	}
@@ -1189,7 +1190,7 @@ uint8_t i2c_read(char* buf, uint8_t len)
     	/* ERROR_DATA, not all data is received */
     	else if (isBitSet(S, 5) || i < len) // RXD 0 = FIFO is empty. 1 = FIFO contains at least 1 byte.
     	{
-		result = 0x04;
+		result = 4;
 		printf("%s() error: ", __func__); 
         	puts("Not all data is received from slave device.");
     	}
@@ -1237,7 +1238,7 @@ uint8_t i2c_byte_read(void){
 	else{
 		printf("%s() error: ", __func__);
         	puts("Data transfer is not complete.");
-        	return result = 0x04;
+        	return result = 4;
     	}
 
     	/* ERROR_NACK, slave address is not acknowledged by slave device */
@@ -1245,7 +1246,7 @@ uint8_t i2c_byte_read(void){
     	{
 		printf("%s() error: ", __func__);
         	puts("Slave address is not acknowledged.");
-        	return result = 0x01; 
+        	return result = 1; 
     	}
 
     	/* ERROR_CLKT, clock stretch timeout error */
@@ -1253,7 +1254,7 @@ uint8_t i2c_byte_read(void){
     	{
 		printf("%s() error: ", __func__);
         	puts("Clock stretch timeout.");
-        	return result = 0x02; 
+        	return result = 2; 
     	}
 
     	/* ERROR_DATA, not all data is received */
@@ -1261,7 +1262,7 @@ uint8_t i2c_byte_read(void){
     	{
 		printf("%s() error: ", __func__);
         	puts("Not all data is received.");
-        	return result = 0x04; 
+        	return result = 4; 
     	}
  
     	return data;
