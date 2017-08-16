@@ -294,25 +294,25 @@ uint8_t rpi_close()
 /* Sets a particular register bit position to 1 or ON state */  
 static uint32_t setBit(volatile uint32_t *reg, uint8_t position)
 {
-        uint32_t mask = 1 << position;
         __sync_synchronize(); 
+        uint32_t mask = 1 << position;
    	return *reg |= mask;
 }
 
 /* Sets a particular register bit position to 0 or OFF state */  
 static uint32_t clearBit(volatile uint32_t *reg, uint8_t position)
 {
+	__sync_synchronize(); 
         uint32_t mask = 1 << position;
-        __sync_synchronize(); 
    	return *reg &= ~mask;
 }
 
 /* Check a particular register bit position if it is 0 (OFF state) or 1 (ON state) */  
 static uint8_t isBitSet(volatile uint32_t *reg, uint8_t position)
 {
+	__sync_synchronize(); 
         volatile uint32_t reg_data = *reg;
         uint32_t mask = 1 << position;
-        __sync_synchronize(); 
 	return reg_data & mask ? 1 : 0;
 }
 
@@ -350,28 +350,53 @@ static void set_gpio(uint8_t pin, uint8_t fsel){
          *gpsel |= mask; 						// write new fsel value to gpselect pointer
 }
 
-/* Sets a GPIO pin as input, internal use only */
-static void gpio_input(uint8_t pin){
+/* Sets a GPIO pin as input */
+void gpio_input(uint8_t pin){
          set_gpio(pin, 0);
 } 
 
-/* Sets a GPIO pin as output, internal use only */
-static void gpio_output(uint8_t pin){
+/* Sets a GPIO pin as output */
+void gpio_output(uint8_t pin){
   	set_gpio(pin, 1);
 }
 
 /*
  * Configure GPIO as input or output
- * mode = 0, as input
- * mode = 1, as output
+ * mode = 0 	input
+ * mode = 1 	output
+ * mode = 4 	alternate function 0 
+ * mode = 5 	alternate function 1
+ * mode = 6 	alternate function 2 
+ * mode = 7 	alternate function 3
+ * mode = 3 	alternate function 4 
+ * mode = 2 	alternate function 5
+ *
  */
 void gpio_config(uint8_t pin, uint8_t mode) {
 	if(mode == 0){ 
-                gpio_input(pin);
+                set_gpio(pin, 0); // input
     	}
     	else if(mode == 1){
- 		gpio_output(pin);
+ 		set_gpio(pin, 1); // output
     	}
+    	else if(mode == 4){
+ 		set_gpio(pin, 4); // alt-func 0
+    	}
+	else if(mode == 5){ 
+                set_gpio(pin, 5); // alt-func 1
+    	}
+	else if(mode == 6){
+ 		set_gpio(pin, 6); // alt-func 2
+    	}
+	else if(mode == 7){ 
+                set_gpio(pin, 7); // alt-func 3
+    	}
+	else if(mode == 3){
+ 		set_gpio(pin, 3); // alt-func 4
+    	}
+   	else if(mode == 2){ 
+                set_gpio(pin, 2); // alt-func 5
+    	}	
     	else{
 		printf("%s() error: ", __func__);
       		puts("Invalid mode parameter.");
@@ -413,8 +438,8 @@ uint8_t gpio_write(uint8_t pin, uint8_t bit) {
  *	  value = 1 ON  state
  */
 uint8_t gpio_read(uint8_t pin) {
+	__sync_synchronize(); 
 	uint32_t set = 1 << pin;
-        __sync_synchronize(); 
 	return *GPLEV & set ? 1 : 0;
 }
 
@@ -548,8 +573,8 @@ void gpio_enable_async_falling_event (uint8_t pin, uint8_t bit) {
  * The GPIO pin must be configured for a level or edge event detection.
  */
 uint8_t gpio_detect_input_event(uint8_t pin) { 
+	__sync_synchronize(); 
 	uint32_t mask = 1 << pin;
-        __sync_synchronize(); 
 	return *GPEDS & mask ? 1 : 0;
 }
 
@@ -610,6 +635,7 @@ void pwm_reset_all_pins(){
  * Set a GPIO pin to its ALT-Func for PWM
  */
 void pwm_set_pin(uint8_t pin){
+	__sync_synchronize(); 
  	
   	if(pin == 12||pin ==13) {       // alt 100b, PHY pin 33, GPIO 13, alt 0 
                 set_gpio(pin, 4);	// alt 100b, PHY pin 32, GPIO 12, alt 0
@@ -908,6 +934,7 @@ CLKT	(C + 0x1C/4) //sretch clk
  */
 int i2c_start()
 {
+	__sync_synchronize(); 
     	if ( C == 0 ){
 		printf("%s() error: ", __func__);
       		puts("Invalid I2C registers addresses.");
@@ -1283,6 +1310,7 @@ void i2c_stop() {
 
     	set_gpio(2, 0);		/* alt 00b, PHY 3, GPIO 2, alt 0 	SDA */
     	set_gpio(3, 0);      	/* alt 00b, PHY 5, GPIO 3, alt 0 	SCL */
+	__sync_synchronize(); 
 }
 
 
@@ -1305,6 +1333,7 @@ SPI_DC		(SPI_CS + 0x14/4)
  */
 int spi_start()
 {
+	__sync_synchronize(); 
     	if ( SPI_CS == 0 ){
 		printf("%s() error: ", __func__);
       		puts("Invalid SPI registers addresses.");
@@ -1338,6 +1367,7 @@ void spi_stop() {
     	set_gpio(9,  0);  // PHY 21, GPIO 9,  using value 0 , set to input  MISO
     	set_gpio(11, 0);  // PHY 23, GPIO 11, using value 0 , set to input  SCLK
 
+	__sync_synchronize(); 
 }
 
 /*

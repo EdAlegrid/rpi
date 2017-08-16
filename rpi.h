@@ -54,6 +54,10 @@ extern void mswait(uint32_t ms);  //millisecond time delay
 **********************/
 extern void gpio_config(uint8_t pin, uint8_t mode);
 
+extern void gpio_input(uint8_t pin);
+
+extern void gpio_output(uint8_t pin);
+
 extern uint8_t gpio_write(uint8_t pin, uint8_t bit);
 
 extern uint8_t gpio_read(uint8_t pin);
