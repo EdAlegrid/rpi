@@ -8,6 +8,9 @@ A lightweight Peripherals Register Control C library for Raspberry Pi
 * I2C (master)  
 * SPI
 
+## Compatibility
+
+* Raspberry Pi Models: B+, 2, 3, Zero & Zero W.
 
 ## Quick Start
 
