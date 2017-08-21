@@ -118,47 +118,6 @@ static uint32_t base_add[BASE_INDEX] = {0};
 static uint32_t system_clock = 250000000; 
 
 
-/**************************************
-
-   	Time Delay Functions
-
-***************************************
-   1 ms = 1000 us or microsecond
-   1 ms = 1000000 ns or nanosecond
-   1 ms = 0.001 or 1/1000 sec
-
-   1 sec = 1000 ms
-   1 sec = 1000000 us or microsecond
-   1 sec = 1000000000 ns or nanosecond
-***************************************/
-
-/* Time delay function in nanoseconds */
-void nswait(uint64_t ns) { 
-    struct timespec req = { ns / 1000000, ns % 1000000 };  
-    struct timespec rem;
-
-    while ( nanosleep(&req,&rem) == -1 )
-            req.tv_nsec = rem.tv_nsec;
-}
-
-/* Time delay function in us or microseconds, valid only if us is below 1000 */
-void uswait(uint32_t us) {
-    struct timespec req = { us / 1000, us % 1000 * 1000 };
-    struct timespec rem;
-
-    while ( nanosleep(&req,&rem) == -1 )
-            req.tv_nsec = rem.tv_nsec;
-}
-
-/* Time delay function in milliseconds */
-void mswait(uint32_t ms) {
-    struct timespec req = { ms / 1000, ms % 1000 * 1000000 };
-    struct timespec rem;
-
-    while ( nanosleep(&req, &rem) == -1 )
-            req.tv_nsec = rem.tv_nsec;
-}
-
 /**********************************
 
    RPI Initialization Functions
@@ -182,7 +141,7 @@ static void arm_info(){
         	if (strncmp (info, "model name", 8) == 0)
            	break ;
         }
-  	printf("%s", info); // model name line
+  	//printf("%s", info); // model name line
   	
         if(strstr(info, "ARMv7")){
         	peri_base = 0x3F000000;
@@ -201,7 +160,7 @@ static void arm_info(){
         	if (strncmp (info, "Hardware", 8) == 0)
            	break ;
         }
-        printf("%s", info); // Hardware line
+        //printf("%s", info); // Hardware line
 
         /* Get Revision info */
 	rewind (fp);
@@ -209,7 +168,7 @@ static void arm_info(){
         	if (strncmp (info, "Revision", 8) == 0)
            	break ;
         }
-        printf("%s", info); // Revision line
+        //printf("%s", info); // Revision line
 	
 	if(strstr(info, "a02082") || strstr(info, "a22082") || strstr(info, "a32082") || strstr(info, "a020a0")){
         	system_clock = 400000000; 
@@ -228,21 +187,22 @@ void rpi_init() {
 	int fd;	
         int i;
 
-        base_add[0] = ST_BASE;
+       	fd = open("/dev/mem",O_RDWR|O_SYNC);  // Needs root access
+	if ( fd < 0 ) {
+		perror("Opening /dev/mem");
+		printf("%s() error: ", __func__);
+                puts("Try running your app in root!\n");
+		close(fd);
+		exit(1);
+	}
+
+	base_add[0] = ST_BASE;
 	base_add[1] = CLK_BASE;
 	base_add[2] = GPIO_BASE;
 	base_add[3] = PWM_BASE;
         base_add[4] = SPI0_BASE;
 	base_add[5] = BSC0_BASE;
 	base_add[6] = BSC1_BASE;
-
-	fd = open("/dev/mem",O_RDWR|O_SYNC);  // Needs root access
-	if ( fd < 0 ) {
-		perror("Opening /dev/mem");
-		printf("%s() error: ", __func__);
-                puts("Try running your app in root!\n");
-		exit(1);
-	}
 
         /* Using mmap, iterate through each base address to get each peripheral base register address */   
         for(i = 0; i < BASE_INDEX; i++){
@@ -283,6 +243,48 @@ uint8_t rpi_close()
 	
 	/* munmap() success */
         return 1;
+}
+
+
+/**************************************
+
+   	Time Delay Functions
+
+***************************************
+   1 ms = 1000 us or microsecond
+   1 ms = 1000000 ns or nanosecond
+   1 ms = 0.001 or 1/1000 sec
+
+   1 sec = 1000 ms
+   1 sec = 1000000 us or microsecond
+   1 sec = 1000000000 ns or nanosecond
+***************************************/
+
+/* Time delay function in nanoseconds */
+void nswait(uint64_t ns) { 
+    struct timespec req = { ns / 1000000, ns % 1000000 };  
+    struct timespec rem;
+
+    while ( nanosleep(&req,&rem) == -1 )
+            req.tv_nsec = rem.tv_nsec;
+}
+
+/* Time delay function in us or microseconds, valid only if us is below 1000 */
+void uswait(uint32_t us) {
+    struct timespec req = { us / 1000, us % 1000 * 1000 };
+    struct timespec rem;
+
+    while ( nanosleep(&req,&rem) == -1 )
+            req.tv_nsec = rem.tv_nsec;
+}
+
+/* Time delay function in milliseconds */
+void mswait(uint32_t ms) {
+    struct timespec req = { ms / 1000, ms % 1000 * 1000000 };
+    struct timespec rem;
+
+    while ( nanosleep(&req, &rem) == -1 )
+            req.tv_nsec = rem.tv_nsec;
 }
 
 /******************************************
