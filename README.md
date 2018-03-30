@@ -34,3 +34,7 @@ Run the application.
 ```console
 $ sudo ./event
 ```
+
+## License
+
+GNU General Public License v3.0
