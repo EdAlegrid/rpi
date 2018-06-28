@@ -2,6 +2,7 @@
  * rpi.c
  * Copyright (c) 2017 Ed Alegrid <ealegrid@gmail.com>
  * GNU General Public License v3.0
+ *
  */
 
 #define  _DEFAULT_SOURCE	// for nanosleep() and usleep()
@@ -28,8 +29,9 @@
 #define BSC0_BASE 		(peri_base + 0x205000)
 #define BSC1_BASE	      	(peri_base + 0x804000)
 
-/* Minimum amount of memory that will be fetched by the Arm Processor's MMU (memory management unit) during memory access */
-#define BLOCK_SIZE 		(4*1024) 
+/* The smallest unit of data for memory management. */
+/* We will use the variable page_size at run time instead. */
+//#define PAGE_SIZE		(4*1024)	/* See page_size variable declaration below */
 
 /* No. of memory address pointers for mmap() */ 
 #define BASE_INDEX 		7
@@ -92,6 +94,9 @@
 #define DEL	(C + 0x18/4) 
 #define CLKT	(C + 0x1C/4) 
 
+/* The smallest unit of data for memory management, obtaining it at run time */
+static int page_size = 4096;
+
 /* Peripheral base address variable. The value of which will be determined depending whether the board is RPi 1, 2 or 3 at compile time */
 static uint32_t peri_base = 0;
 
@@ -103,7 +108,6 @@ static uint32_t base_add[BASE_INDEX] = {0};
 
 /* System clock frequency: RPi 1 & 2 = 250 MHz, RPi 3 = 400 MHz */
 static uint32_t system_clock = 250000000; 
-
 
 /**********************************
 
@@ -170,9 +174,13 @@ static void arm_info(){
 void rpi_init() {
 
         arm_info();
-
 	int fd;	
         int i;
+        page_size = sysconf(_SC_PAGESIZE);
+	if(page_size < 0){
+		perror("page_size");
+		exit(1);
+        }
 
        	fd = open("/dev/mem",O_RDWR|O_SYNC);  // Needs root access
 	if ( fd < 0 ) {
@@ -194,7 +202,7 @@ void rpi_init() {
         /* Using mmap, iterate through each base address to get each peripheral base register address */   
         for(i = 0; i < BASE_INDEX; i++){
 
-        	base_pointer[i] = mmap(NULL, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, base_add[i]);
+        	base_pointer[i] = mmap(NULL, page_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, base_add[i]);
 
 		if (base_pointer[i] == MAP_FAILED) {
                 	perror("mmap() error");
@@ -211,7 +219,8 @@ void rpi_init() {
 	}
 
         /* Close fd after memory-mapped operation, we have no use for it anymore */
-	close(fd);
+	if (close(fd) < 0)
+		perror("close");
 }
 
 /* Close the library and reset all memory pointers to 0 or NULL */
@@ -219,17 +228,17 @@ uint8_t rpi_close()
 {
         int i;
 	for(i = 0; i < BASE_INDEX; i++){
-	       	if (munmap( (uint32_t *) base_pointer[i] , BLOCK_SIZE) < 0){
+	       	if (munmap( (uint32_t *) base_pointer[i] , page_size) < 0){
          		perror("munmap() error");
 			printf("%s() error: ", __func__);
 			puts("munmap() operation fail"); 
-                        exit(1);
+			return 1;
         	}
                 base_pointer[i] = 0;
 	}
 	
 	/* munmap() success */
-        return 1;
+        return 0;
 }
 
 
