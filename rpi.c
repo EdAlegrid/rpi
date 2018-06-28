@@ -187,7 +187,6 @@ void rpi_init() {
 		perror("Opening /dev/mem");
 		printf("%s() error: ", __func__);
                 puts("Try running your app in root!\n");
-		close(fd);
 		exit(1);
 	}
 
@@ -208,6 +207,8 @@ void rpi_init() {
                 	perror("mmap() error");
 			printf("%s() error: ", __func__);
 			puts("Invalid peripheral register base address.");
+			if (close(fd) < 0)
+				perror("close");
 			exit(1);
         	}
 	
