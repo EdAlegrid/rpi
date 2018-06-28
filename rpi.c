@@ -103,7 +103,7 @@ static uint32_t peri_base = 0;
 /* Temporary array container for pointers to peripheral register base addresses */
 static volatile uint32_t *base_pointer[BASE_INDEX] = {0};
 
-/* mmap() base addresses container */
+/* mmap() peripheral base addresses container */
 static uint32_t base_add[BASE_INDEX] = {0};
 
 /* System clock frequency: RPi 1 & 2 = 250 MHz, RPi 3 = 400 MHz */
@@ -212,10 +212,10 @@ void rpi_init() {
 			exit(1);
         	}
 	
-		/* Initialize all peripheral base registers to 0 for a clean start-up */
-        	*base_pointer[i] = 0x0;
+		/* Reset peripheral base register pointers back to 0 */
+        	*base_pointer[i] = 0; 
 
-    		/* Reset each array base address to 0 */
+    		/* Reset peripheral base addresses back to 0 */
                 base_add[i] = 0;
 	}
 
