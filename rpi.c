@@ -208,7 +208,7 @@ void rpi_init() {
 			printf("%s() error: ", __func__);
 			puts("Invalid peripheral register base address.");
 			if (close(fd) < 0)
-				perror("close");
+				perror("close fd");
 			exit(1);
         	}
 	
@@ -221,7 +221,7 @@ void rpi_init() {
 
         /* Close fd after memory-mapped operation, we have no use for it anymore */
 	if (close(fd) < 0)
-		perror("close");
+		perror("close fd");
 }
 
 /* Close the library and reset all memory pointers to 0 or NULL */
@@ -233,7 +233,7 @@ uint8_t rpi_close()
          		perror("munmap() error");
 			printf("%s() error: ", __func__);
 			puts("munmap() operation fail"); 
-			return 1;
+			return -1;
         	}
                 base_pointer[i] = 0;
 	}
