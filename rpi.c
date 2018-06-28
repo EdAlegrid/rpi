@@ -219,7 +219,7 @@ void rpi_init() {
                 base_add[i] = 0;
 	}
 
-        /* Close fd after memory-mapped operation, we have no use for it anymore */
+        /* Close fd after memory-mapped operation */
 	if (close(fd) < 0)
 		perror("close fd");
 }
