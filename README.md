@@ -1,5 +1,5 @@
 # rpi
-A lightweight Peripherals Register Control C library for Raspberry Pi
+A lightweight peripherals register control C language library for raspberry pi
 
 #### Supports the following ARM peripherals
 
