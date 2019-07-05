@@ -44,7 +44,7 @@ void mcp2008(void){
 
 	spi_set_chip_select_polarity(0, 0);
 
-	/* select MCP23017 slave device */
+	/* select MCP2008 slave device */
         spi_chip_select(0);
   
         /* access config register */

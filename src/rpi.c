@@ -59,12 +59,12 @@
 #define	GPEDS  	 (GPSEL + 0x40/4) 
 #define GPREN  	 (GPSEL + 0x4C/4) 
 #define	GPFEN  	 (GPSEL + 0x58/4)
-#define GPHEN  	 (GPSEL + 0x64/4)
+#define	GPHEN  	 (GPSEL + 0x64/4)
 #define	GPLEN  	 (GPSEL + 0x70/4)
 #define	GPAREN 	 (GPSEL + 0x7C/4)
 #define	GPAFEN 	 (GPSEL + 0x88/4)
-#define GPPUD  	 (GPSEL + 0x94/4)
-#define GPPUDCLK (GPSEL + 0x98/4)
+#define	GPPUD  	 (GPSEL + 0x94/4)
+#define	GPPUDCLK (GPSEL + 0x98/4)
 
 /* PWM register addresses */
 #define CTL 	(base_pointer[3] + 0x0)			
@@ -76,7 +76,7 @@
 #define DAT2	(CTL + 0x24/4)
 
 /* SPI register addresses */
-#define SPI_CS 		(base_pointer[4] + 0x0)  
+#define SPI_CS		(base_pointer[4] + 0x0)  
 #define SPI_FIFO	(SPI_CS + 0x4/4)
 #define SPI_CLK		(SPI_CS + 0x8/4)
 #define SPI_DLEN	(SPI_CS + 0xC/4)
@@ -446,11 +446,11 @@ uint8_t gpio_read(uint8_t pin) {
 void gpio_reset_all_events (uint8_t pin) {
 	clearBit(GPREN, pin);
 	clearBit(GPFEN, pin);
-        clearBit(GPHEN, pin);
+	clearBit(GPHEN, pin);
 	clearBit(GPLEN, pin);
-        clearBit(GPAREN, pin);
+	clearBit(GPAREN, pin);
 	clearBit(GPAFEN, pin);
-        setBit(GPEDS, pin);
+	setBit(GPEDS, pin);
 }
 
 /**************************
@@ -591,17 +591,17 @@ void gpio_reset_event(uint8_t pin) {
 void gpio_enable_pud(uint8_t pin, uint8_t value) {
 	if(value == 0){       
         	*GPPUD = 0x0;	// Disable PUD/Pull-UP/Down
-   	}
-    	else if(value == 1){  
+	}
+	else if(value == 1){  
                 *GPPUD = 0x1;	// Enable PD/Pull-Down
-    	}
-    	else if(value == 2){ 
+	}
+	else if(value == 2){ 
                  *GPPUD = 0x2;	// Enable PU/Pull-Up
-    	}
+	}
         else{
 		printf("%s() error: ", __func__);
 		puts("Invalid pud value.");
-        }
+	}
 
 	uswait(150);  	/* required wait times based on bcm2835 manual */
 	setBit(GPPUDCLK, pin);
@@ -620,14 +620,14 @@ void gpio_enable_pud(uint8_t pin, uint8_t value) {
  * Reset all PWM pins to GPIO input
  */
 void pwm_reset_all_pins(){
-   	gpio_input(18); // GPIO 18/PHY pin 12, channel 1
-        mswait(10);
-        gpio_input(13); // GPIO 13/PHY pin 33, channel 2
-        mswait(10);
-   	gpio_input(12); // GPIO 12/PHY pin 32, channel 1
-        mswait(10);
-   	gpio_input(19); // GPIO 19/PHY pin 35, channel 2
-        __sync_synchronize();      
+	gpio_input(18); // GPIO 18/PHY pin 12, channel 1
+	mswait(10);
+	gpio_input(13); // GPIO 13/PHY pin 33, channel 2
+	mswait(10);
+	gpio_input(12); // GPIO 12/PHY pin 32, channel 1
+	mswait(10);
+	gpio_input(19); // GPIO 19/PHY pin 35, channel 2
+	__sync_synchronize();      
 } 
 
 /*
