@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <signal.h>
 
-#include "rpi.h"
+#include "./src/rpi.h"
 
 /**
  GPIO Pin to PHY Pin (board header pin number)
@@ -63,7 +63,7 @@ int main(void){
  
 	signal(SIGINT, sighandler);
   
-  	puts("starting rpi ...");
+  	puts("initializing rpi ...");
   	rpi_init();
   
         /* set statusPin to GPIO output */
@@ -86,7 +86,7 @@ int main(void){
   	gpio_enable_async_rising_event(inputPin, 1);
   	gpio_enable_async_rising_event(inputPin2, 1);
  
-  	puts("starting GPIO Input Pin Event Detection loop");
+  	puts("input event detection loop is running ...");
   	while(1) {
 
     		gpio_write(statusPin, 1);

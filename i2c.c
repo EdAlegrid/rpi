@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <signal.h>
 
-#include "rpi.h"
+#include "./src/rpi.h"
 
 /**
  * Circuit Setup
