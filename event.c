@@ -78,35 +78,25 @@ int main(void){
 	gpio_config(inputPin, 0);
         gpio_config(inputPin2, 0);
 
-  	/* reset any previous input events setup */
-  	gpio_reset_all_events(inputPin);
-  	gpio_reset_all_events(inputPin2);
-  
-  	/* enable async_rising edge detection event */
-  	gpio_enable_async_rising_event(inputPin, 1);
-  	gpio_enable_async_rising_event(inputPin2, 1);
- 
-  	puts("input event detection loop is running ...");
+    	puts("input event detection loop is running ...");
   	while(1) {
 
     		gpio_write(statusPin, 1);
 
                 /* press inputPin switch to turn ON LED output */
-    		if(gpio_detect_input_event(inputPin)){
+    		if(gpio_read(inputPin)){
 			puts("turning ON  outputPin ...");
       			gpio_write(outputPin, 1);
-			gpio_reset_event(inputPin);
     		}
   
 		/* press inputPin2 switch to turn OFF LED output */
-    		if(gpio_detect_input_event(inputPin2)){
+    		if(gpio_read(inputPin2)){
  			puts("turning OFF outputPin ...");
       			gpio_write(outputPin, 0);
-			gpio_reset_event(inputPin2);
     		}
 
                 /* status LED will blink, indicates loop is running */
-    		mswait(300);
+    		mswait(200);
     		gpio_write(statusPin, 0);
     		mswait(200);
  	}
