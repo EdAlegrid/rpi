@@ -33,7 +33,7 @@ $ gcc -Wall -pedantic pwm.c obj/rpi.o -o pwm -std=c11
 
 Run the application.
 ```console
-$ sudo ./event
+$ sudo ./pwm
 ```
 
 ## License
