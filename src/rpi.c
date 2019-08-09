@@ -98,7 +98,7 @@
 static int page_size = 4096;
 
 /* Peripheral base address variable. The value of which will be determined depending whether the board is RPi 1, 2 or 3 at compile time */
-static uint32_t peri_base = 0;
+static volatile uint32_t peri_base = 0;
 
 /* Temporary array container for pointers to peripheral register base addresses */
 static volatile uint32_t *base_pointer[BASE_INDEX] = {0};
@@ -301,26 +301,30 @@ void mswait(uint32_t ms) {
 /* Sets a particular register bit position to 1 or ON state */  
 static uint32_t setBit(volatile uint32_t *reg, uint8_t position)
 {
-        __sync_synchronize(); 
+        volatile uint32_t result = 0; 
         uint32_t mask = 1 << position;
-   	return *reg |= mask;
+ 	__sync_synchronize();
+   	result = *reg |= mask;
+        __sync_synchronize();
+        return result;
 }
 
 /* Sets a particular register bit position to 0 or OFF state */  
 static uint32_t clearBit(volatile uint32_t *reg, uint8_t position)
 {
-	__sync_synchronize(); 
+        volatile uint32_t result = 0; 
         uint32_t mask = 1 << position;
-   	return *reg &= ~mask;
+ 	__sync_synchronize();
+   	result = *reg &= ~mask;
+        __sync_synchronize();
+        return result;
 }
 
 /* Check a particular register bit position if it is 0 (OFF state) or 1 (ON state) */  
 static uint8_t isBitSet(volatile uint32_t *reg, uint8_t position)
 {
-	__sync_synchronize(); 
-        volatile uint32_t reg_data = *reg;
         uint32_t mask = 1 << position;
-	return reg_data & mask ? 1 : 0;
+ 	return *reg & mask ? 1 : 0;
 }
 
 /**************************************************************************
@@ -343,8 +347,6 @@ static void set_gpio(uint8_t pin, uint8_t fsel){
    
          /* get base address (GPSEL0 to GPSEL5) using *(GPSEL + (pin/10))
             get mask using (alt << ((pin)%10)*3) */
-
-         __sync_synchronize();	// memory barrier instruction  
      
          volatile uint32_t *gpsel = (uint32_t *)(GPSEL + (pin/10)); 	// get the GPSEL pointer (GPSEL0 ~ GPSEL5) based on the pin number selected
         
@@ -354,12 +356,14 @@ static void set_gpio(uint8_t pin, uint8_t fsel){
 
          mask = (fsel <<  ((pin) % 10)*3); 				// mask for new fsel value   
 
+  	 __sync_synchronize();
          *gpsel |= mask; 						// write new fsel value to gpselect pointer
+         __sync_synchronize();
 }
 
 /* Sets a GPIO pin as input */
 void gpio_input(uint8_t pin){
-         set_gpio(pin, 0);
+        set_gpio(pin, 0);
 } 
 
 /* Sets a GPIO pin as output */
@@ -418,25 +422,25 @@ void gpio_config(uint8_t pin, uint8_t mode) {
 uint8_t gpio_write(uint8_t pin, uint8_t bit) { 
 
         volatile uint32_t *p = NULL;
-        
-        __sync_synchronize(); 
 
-    	if ( bit == 1) {
+        __sync_synchronize();
+
+    	if(bit == 1) {
                 p = (uint32_t *)GPSET;
         	*p = 1 << pin; 
-                return 1;
     	} 
-    	else if ( bit == 0 ) {
+    	else if(bit == 0 ) {
                 p = (uint32_t *)GPCLR;
-
-        	*p = 1 << pin; 
-               	return 0;
+        	*p = 1 << pin;
     	}
     	else{
 		printf("%s() error: ", __func__);
       		puts("Invalid bit parameter");
-      		return - 1;
     	}
+    
+        __sync_synchronize();
+
+        return bit; 
 }
 
 /*
@@ -445,20 +449,27 @@ uint8_t gpio_write(uint8_t pin, uint8_t bit) {
  *	  value = 1 ON  state
  */
 uint8_t gpio_read(uint8_t pin) {
-	__sync_synchronize(); 
-	uint32_t set = 1 << pin;
-	return *GPLEV & set ? 1 : 0;
+        return isBitSet(GPLEV, pin);
 }
+
 
 /* Remove all configured event detection from a GPIO pin */
 void gpio_reset_all_events (uint8_t pin) {
 	clearBit(GPREN, pin);
+        mswait(1);
 	clearBit(GPFEN, pin);
+        mswait(1);
         clearBit(GPHEN, pin);
+        mswait(1);
 	clearBit(GPLEN, pin);
+        mswait(1);
         clearBit(GPAREN, pin);
+        mswait(1);
 	clearBit(GPAFEN, pin);
+        mswait(1);
         setBit(GPEDS, pin);
+        mswait(1);
+
 }
 
 /**************************
@@ -580,9 +591,7 @@ void gpio_enable_async_falling_event (uint8_t pin, uint8_t bit) {
  * The GPIO pin must be configured for a level or edge event detection.
  */
 uint8_t gpio_detect_input_event(uint8_t pin) { 
-	__sync_synchronize(); 
-	uint32_t mask = 1 << pin;
-	return *GPEDS & mask ? 1 : 0;
+        return isBitSet(GPEDS, pin);
 }
 
 /* Reset input pin event when an event is detected (using gpio_detect_input_event() function). */  
@@ -628,13 +637,12 @@ void gpio_enable_pud(uint8_t pin, uint8_t value) {
  */
 void pwm_reset_all_pins(){
    	gpio_input(18); // GPIO 18/PHY pin 12, channel 1
-        mswait(10);
+        mswait(1);
         gpio_input(13); // GPIO 13/PHY pin 33, channel 2
-        mswait(10);
+        mswait(1);
    	gpio_input(12); // GPIO 12/PHY pin 32, channel 1
-        mswait(10);
+        mswait(1);
    	gpio_input(19); // GPIO 19/PHY pin 35, channel 2
-        __sync_synchronize();      
 } 
 
 /*
@@ -642,7 +650,6 @@ void pwm_reset_all_pins(){
  */
 void pwm_set_pin(uint8_t pin){
 
-	__sync_synchronize(); 
   	if(pin == 12||pin ==13) {       // alt 100b, PHY pin 33, GPIO 13, alt 0 
                 set_gpio(pin, 4);	// alt 100b, PHY pin 32, GPIO 12, alt 0
   	}
@@ -670,7 +677,6 @@ void pwm_reset_pin(uint8_t pin){
     		puts("Invalid pin.");
       		exit(1);
   	}
-        __sync_synchronize();      
 }
 
 /*****************************************
@@ -817,7 +823,6 @@ static void pwm_reg_ctrl(uint8_t n, uint8_t position){
      		puts("Invalid n control parameter. Choose 1 or 0 only.");
    	}
    	uswait(10); 
-        __sync_synchronize();      
 }
 
 /* Enable/Disable PWM
@@ -940,7 +945,6 @@ CLKT	(C + 0x1C/4) //sretch clk
  */
 int i2c_start()
 {
-	__sync_synchronize(); 
     	if ( C == 0 ){
 		printf("%s() error: ", __func__);
       		puts("Invalid I2C registers addresses.");
@@ -1316,7 +1320,6 @@ void i2c_stop() {
 
     	set_gpio(2, 0);		/* alt 00b, PHY 3, GPIO 2, alt 0 	SDA */
     	set_gpio(3, 0);      	/* alt 00b, PHY 5, GPIO 3, alt 0 	SCL */
-	__sync_synchronize(); 
 }
 
 
@@ -1372,8 +1375,6 @@ void spi_stop() {
 	set_gpio(10, 0);  // PHY 19, GPIO 10, using value 0 , set to input  MOSI
     	set_gpio(9,  0);  // PHY 21, GPIO 9,  using value 0 , set to input  MISO
     	set_gpio(11, 0);  // PHY 23, GPIO 11, using value 0 , set to input  SCLK
-
-	__sync_synchronize(); 
 }
 
 /*
