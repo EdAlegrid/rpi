@@ -98,7 +98,7 @@ int main(void){
  
 	signal(SIGINT, sighandler);
   
-    	rpi_init();
+    	rpi_init(1);
  
   	puts("starting spi loop operation ...");
   	while(1) {
