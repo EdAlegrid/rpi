@@ -29,8 +29,8 @@
 #define BSC0_BASE 		(peri_base + 0x205000)
 #define BSC1_BASE	      	(peri_base + 0x804000)
 
-/* The smallest unit of data for memory management. */
-/* We will use the variable page_size at run time instead. */
+/* The smallest unit of data for memory management */
+/* We will use the variable page_size at run time instead */
 //#define PAGE_SIZE		(4*1024)	/* See page_size variable declaration below */
 
 /* No. of memory address pointers for mmap() */ 
@@ -59,12 +59,12 @@
 #define	GPEDS  	 (GPSEL + 0x40/4) 
 #define GPREN  	 (GPSEL + 0x4C/4) 
 #define	GPFEN  	 (GPSEL + 0x58/4)
-#define	GPHEN  	 (GPSEL + 0x64/4)
+#define GPHEN  	 (GPSEL + 0x64/4)
 #define	GPLEN  	 (GPSEL + 0x70/4)
 #define	GPAREN 	 (GPSEL + 0x7C/4)
 #define	GPAFEN 	 (GPSEL + 0x88/4)
-#define	GPPUD  	 (GPSEL + 0x94/4)
-#define	GPPUDCLK (GPSEL + 0x98/4)
+#define GPPUD  	 (GPSEL + 0x94/4)
+#define GPPUDCLK (GPSEL + 0x98/4)
 
 /* PWM register addresses */
 #define CTL 	(base_pointer[3] + 0x0)			
@@ -76,7 +76,7 @@
 #define DAT2	(CTL + 0x24/4)
 
 /* SPI register addresses */
-#define SPI_CS		(base_pointer[4] + 0x0)  
+#define SPI_CS 		(base_pointer[4] + 0x0)  
 #define SPI_FIFO	(SPI_CS + 0x4/4)
 #define SPI_CLK		(SPI_CS + 0x8/4)
 #define SPI_DLEN	(SPI_CS + 0xC/4)
@@ -103,8 +103,8 @@ static uint32_t peri_base = 0;
 /* Temporary array container for pointers to peripheral register base addresses */
 static volatile uint32_t *base_pointer[BASE_INDEX] = {0};
 
-/* mmap() peripheral base addresses container */
-static uint32_t base_add[BASE_INDEX] = {0};
+/* mmap() base addresses container */
+static volatile uint32_t base_add[BASE_INDEX] = {0};
 
 /* System clock frequency: RPi 1 & 2 = 250 MHz, RPi 3 = 400 MHz */
 static uint32_t system_clock = 250000000; 
@@ -171,24 +171,32 @@ static void arm_info(){
 /*
  * Initialize Arm Peripheral Base Register Adressses using mmap()
  */
-void rpi_init() {
+void rpi_init(int access) {
 
         arm_info();
 	int fd;	
         int i;
-        page_size = sysconf(_SC_PAGESIZE);
-	if(page_size < 0){
+	page_size = sysconf(_SC_PAGESIZE);
+        if(page_size < 0){
 		perror("page_size");
 		exit(1);
         }
 
-       	fd = open("/dev/mem",O_RDWR|O_SYNC);  // Needs root access
-	if ( fd < 0 ) {
-		perror("Opening /dev/mem");
-		printf("%s() error: ", __func__);
-                puts("Try running your app in root!\n");
-		exit(1);
-	}
+	if (!access) { // access = 0, non-root
+		if ((fd = open("/dev/gpiomem",O_RDWR|O_SYNC)) < 0) {
+			perror("opening rpi in /dev/gpiomem");
+			printf("%s() error: ", __func__);
+			exit(1);
+	        }
+        }
+	else if(access) { // access = 1, root
+		if ((fd = open("/dev/mem",O_RDWR|O_SYNC)) < 0) {
+			perror("opening rpi in /dev/mem requires root access");
+			//printf("%s() error: ", __func__);
+			puts("Try running your application with sudo or in root!\n");
+			exit(1);
+ 	        }
+        }
 
 	base_add[0] = ST_BASE;
 	base_add[1] = CLK_BASE;
@@ -197,7 +205,7 @@ void rpi_init() {
         base_add[4] = SPI0_BASE;
 	base_add[5] = BSC0_BASE;
 	base_add[6] = BSC1_BASE;
-
+	
         /* Using mmap, iterate through each base address to get each peripheral base register address */   
         for(i = 0; i < BASE_INDEX; i++){
 
@@ -207,8 +215,8 @@ void rpi_init() {
                 	perror("mmap() error");
 			printf("%s() error: ", __func__);
 			puts("Invalid peripheral register base address.");
-			if (close(fd) < 0)
-				perror("close fd");
+                        if(close(fd) < 0)
+				perror("fd close");
 			exit(1);
         	}
 	
@@ -220,8 +228,8 @@ void rpi_init() {
 	}
 
         /* Close fd after memory-mapped operation */
-	if (close(fd) < 0)
-		perror("close fd");
+	if(close(fd) < 0)
+		perror("fd close");
 }
 
 /* Close the library and reset all memory pointers to 0 or NULL */
@@ -241,7 +249,6 @@ uint8_t rpi_close()
 	/* munmap() success */
         return 0;
 }
-
 
 /**************************************
 
@@ -283,6 +290,7 @@ void mswait(uint32_t ms) {
     while ( nanosleep(&req, &rem) == -1 )
             req.tv_nsec = rem.tv_nsec;
 }
+
 
 /******************************************
 
@@ -446,11 +454,11 @@ uint8_t gpio_read(uint8_t pin) {
 void gpio_reset_all_events (uint8_t pin) {
 	clearBit(GPREN, pin);
 	clearBit(GPFEN, pin);
-	clearBit(GPHEN, pin);
+        clearBit(GPHEN, pin);
 	clearBit(GPLEN, pin);
-	clearBit(GPAREN, pin);
+        clearBit(GPAREN, pin);
 	clearBit(GPAFEN, pin);
-	setBit(GPEDS, pin);
+        setBit(GPEDS, pin);
 }
 
 /**************************
@@ -582,26 +590,25 @@ void gpio_reset_event(uint8_t pin) {
    	setBit(GPEDS, pin);
 }
 
-
 /* Enable internal PULL-UP/PULL-DOWN resistor for input pin
- * value = 1, 0x0 or 00b, Disable Pull-Up/Down, no PU/PD resistor will be used
- * value = 2, 0x1 or 01b, Enable Pull-Down resistor
- * value = 3, 0x2 or 10b, Enable Pull-Up resistor
+ * value = 0, 0x0 or 00b, Disable Pull-Up/Down, no PU/PD resistor will be used
+ * value = 1, 0x1 or 01b, Enable Pull-Down resistor
+ * value = 2, 0x2 or 10b, Enable Pull-Up resistor
  */
 void gpio_enable_pud(uint8_t pin, uint8_t value) {
 	if(value == 0){       
         	*GPPUD = 0x0;	// Disable PUD/Pull-UP/Down
-	}
-	else if(value == 1){  
+   	}
+    	else if(value == 1){  
                 *GPPUD = 0x1;	// Enable PD/Pull-Down
-	}
-	else if(value == 2){ 
+    	}
+    	else if(value == 2){ 
                  *GPPUD = 0x2;	// Enable PU/Pull-Up
-	}
+    	}
         else{
 		printf("%s() error: ", __func__);
 		puts("Invalid pud value.");
-	}
+        }
 
 	uswait(150);  	/* required wait times based on bcm2835 manual */
 	setBit(GPPUDCLK, pin);
@@ -620,22 +627,22 @@ void gpio_enable_pud(uint8_t pin, uint8_t value) {
  * Reset all PWM pins to GPIO input
  */
 void pwm_reset_all_pins(){
-	gpio_input(18); // GPIO 18/PHY pin 12, channel 1
-	mswait(10);
-	gpio_input(13); // GPIO 13/PHY pin 33, channel 2
-	mswait(10);
-	gpio_input(12); // GPIO 12/PHY pin 32, channel 1
-	mswait(10);
-	gpio_input(19); // GPIO 19/PHY pin 35, channel 2
-	__sync_synchronize();      
+   	gpio_input(18); // GPIO 18/PHY pin 12, channel 1
+        mswait(10);
+        gpio_input(13); // GPIO 13/PHY pin 33, channel 2
+        mswait(10);
+   	gpio_input(12); // GPIO 12/PHY pin 32, channel 1
+        mswait(10);
+   	gpio_input(19); // GPIO 19/PHY pin 35, channel 2
+        __sync_synchronize();      
 } 
 
 /*
  * Set a GPIO pin to its ALT-Func for PWM
  */
 void pwm_set_pin(uint8_t pin){
+
 	__sync_synchronize(); 
- 	
   	if(pin == 12||pin ==13) {       // alt 100b, PHY pin 33, GPIO 13, alt 0 
                 set_gpio(pin, 4);	// alt 100b, PHY pin 32, GPIO 12, alt 0
   	}
@@ -1373,7 +1380,9 @@ void spi_stop() {
  * Set SPI clock frequency
  */
 void spi_set_clock_freq(uint16_t divider){
+
 	volatile uint32_t* div = (uint32_t *)SPI_CLK;
+
     	*div = divider;
 }
 
@@ -1392,6 +1401,7 @@ void spi_set_data_mode(uint8_t mode){
         // alternative code
         /*
     	volatile uint32_t* cs = (uint32_t *)SPI_CS;
+
     	uint32_t mask = ~ (3 <<  2);	// clear bit position 2 and 3 first
     	*cs &= mask;		  	// set mask to 0
     	mask = (mode <<  2); 	  	// write mode value to set SPI data mode   

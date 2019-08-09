@@ -1,10 +1,8 @@
 /*
- * This is a low-level Peripherals Control Library for ARM-based SBC's 
- * such as Raspberry Pi 1 Model B+, 2, 3 and Pi Zero W.
- *
- * rpi.h
+ * rpi.c
  * Copyright (c) 2017 Ed Alegrid <ealegrid@gmail.com>
  * GNU General Public License v3.0
+ *
  */
 
 /* Defines for RPI */
@@ -19,11 +17,10 @@
 extern "C" {
 #endif
 
-
 /****************************
    Initialize RPI library 
 *****************************/
-extern void rpi_init(); 
+extern void rpi_init(int access); 
 
 /***********************
    Close RPI library 
@@ -48,9 +45,9 @@ extern void gpio_input(uint8_t pin);
 
 extern void gpio_output(uint8_t pin);
 
-extern uint8_t gpio_write(uint8_t pin, uint8_t bit);
+extern uint8_t gpio_read(uint8_t pin); 
 
-extern uint8_t gpio_read(uint8_t pin);
+extern uint8_t gpio_write(uint8_t pin, uint8_t bit);
 
 extern void gpio_reset_all_events(uint8_t pin);
 
@@ -112,7 +109,7 @@ extern uint8_t i2c_write(const char * wbuf, uint8_t len);
 
 extern uint8_t i2c_read(char * rbuf, uint8_t len);
 
-extern uint8_t i2c_byte_read(void);
+extern uint8_t i2c_byte_read();
 
 /********************
 	SPI
@@ -134,7 +131,6 @@ extern void spi_data_transfer(char* wbuf, char* rbuf, uint8_t len);
 extern void spi_write(char* wbuf, uint8_t len);
 
 extern void spi_read(char* rbuf, uint8_t len);
-
 
 
 #ifdef __cplusplus
