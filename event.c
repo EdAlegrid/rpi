@@ -64,7 +64,7 @@ int main(void){
 	signal(SIGINT, sighandler);
   
   	puts("initializing rpi ...");
-  	rpi_init();
+  	rpi_init(0);
   
         /* set statusPin to GPIO output */
   	gpio_config(statusPin, 1);
