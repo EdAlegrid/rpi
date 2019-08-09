@@ -71,7 +71,7 @@ int main(){
  
 	signal(SIGINT, sighandler);
  
-    	rpi_init();
+    	rpi_init(1);
  
   	puts("starting pwm loop operation ...");
   	while(1) {
