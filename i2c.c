@@ -120,7 +120,7 @@ int main(void){
  
 	signal(SIGINT, sighandler);
   
-    	rpi_init();
+    	rpi_init(1);
  
   	puts("starting i2c loop operation ...");
   	while(1) {
