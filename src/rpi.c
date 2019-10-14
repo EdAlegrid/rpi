@@ -95,19 +95,19 @@
 #define CLKT	(C + 0x1C/4) 
 
 /* The smallest unit of data for memory management, obtaining it at run time */
-static int page_size = 4096;
+int page_size = 4096;
 
 /* Peripheral base address variable. The value of which will be determined depending whether the board is RPi 1, 2 or 3 at compile time */
-static volatile uint32_t peri_base = 0;
+volatile uint32_t peri_base = 0;
 
 /* Temporary array container for pointers to peripheral register base addresses */
-static volatile uint32_t *base_pointer[BASE_INDEX] = {0};
+volatile uint32_t *base_pointer[BASE_INDEX] = {0};
 
 /* mmap() base addresses container */
-static volatile uint32_t base_add[BASE_INDEX] = {0};
+volatile uint32_t base_add[BASE_INDEX] = {0};
 
 /* System clock frequency: RPi 1 & 2 = 250 MHz, RPi 3 = 400 MHz */
-static uint32_t system_clock = 250000000; 
+uint32_t system_clock = 250000000; 
 
 /**********************************
 
@@ -116,7 +116,7 @@ static uint32_t system_clock = 250000000;
 ***********************************/
 
 /* Get ARM version info */
-static void arm_info(){
+void arm_info(){
 
 	FILE *fp;
    	char info[200];
@@ -221,10 +221,10 @@ void rpi_init(int access) {
         	}
 	
 		/* Reset peripheral base register pointers back to 0 */
-        	*base_pointer[i] = 0; 
+        	// *base_pointer[i] = 0; /* disabled for socket can operation */  
 
     		/* Reset peripheral base addresses back to 0 */
-                base_add[i] = 0;
+                // base_add[i] = 0; /* disabled for socket can operation */  
 	}
 
         /* Close fd after memory-mapped operation */
@@ -243,7 +243,7 @@ uint8_t rpi_close()
 			puts("munmap() operation fail"); 
 			return -1;
         	}
-                base_pointer[i] = 0;
+                // base_pointer[i] = 0; /* disabled for socket can operation */  
 	}
 	
 	/* munmap() success */
@@ -291,15 +291,14 @@ void mswait(uint32_t ms) {
             req.tv_nsec = rem.tv_nsec;
 }
 
-
 /******************************************
 
     Register Bit Manipulation Functions
 
 *******************************************/
 
-/* Sets a particular register bit position to 1 or ON state */  
-static uint32_t setBit(volatile uint32_t *reg, uint8_t position)
+/* Set register bit position to 1 or ON state */  
+uint32_t setBit(volatile uint32_t *reg, uint8_t position)
 {
         volatile uint32_t result = 0; 
         uint32_t mask = 1 << position;
@@ -309,8 +308,8 @@ static uint32_t setBit(volatile uint32_t *reg, uint8_t position)
         return result;
 }
 
-/* Sets a particular register bit position to 0 or OFF state */  
-static uint32_t clearBit(volatile uint32_t *reg, uint8_t position)
+/* Set register bit position to 0 or OFF state */  
+uint32_t clearBit(volatile uint32_t *reg, uint8_t position)
 {
         volatile uint32_t result = 0; 
         uint32_t mask = 1 << position;
@@ -320,59 +319,66 @@ static uint32_t clearBit(volatile uint32_t *reg, uint8_t position)
         return result;
 }
 
-/* Check a particular register bit position if it is 0 (OFF state) or 1 (ON state) */  
-static uint8_t isBitSet(volatile uint32_t *reg, uint8_t position)
+/* Check register bit position if it is 0 (OFF state) or 1 (ON state) */  
+uint8_t isBitSet(volatile uint32_t *reg, uint8_t position)
 {
         uint32_t mask = 1 << position;
  	return *reg & mask ? 1 : 0;
 }
 
-/**************************************************************************
+/*******************************
 
-	- base address depends on the pin that will be used
-	- sets a GPIO pin based on fsel hex value
+    GPIO Control Functions
 
-	fsel hex values		fsel function (binary values)
-	0x0			000 = GPIO Pin is an input
-	0x1			001 = GPIO Pin is an output
-	0x4			100 = GPIO Pin takes alternate function 0
-	0x5			101 = GPIO Pin takes alternate function 1
-	0x6			110 = GPIO Pin takes alternate function 2
-	0x7			111 = GPIO Pin takes alternate function 3
-	0x3			011 = GPIO Pin takes alternate function 4
-	0x2			010 = GPIO Pin takes alternate function 5
+********************************/
 
-***************************************************************************/
-static void set_gpio(uint8_t pin, uint8_t fsel){
-   
-         /* get base address (GPSEL0 to GPSEL5) using *(GPSEL + (pin/10))
-            get mask using (alt << ((pin)%10)*3) */
+/*
+ * Set a GPIO pin based on fsel hex value
+ *
+ *  fsel hex values  fsel binary values   GPIO pin function 
+ *
+ *  0x0		     000 		  GPIO Pin is an input
+ *  0x1		     001 		  GPIO Pin is an output
+ *  0x4		     100                  GPIO Pin takes alternate function 0
+ *  0x5		     101                  GPIO Pin takes alternate function 1
+ *  0x6		     110 		  GPIO Pin takes alternate function 2
+ *  0x7		     111		  GPIO Pin takes alternate function 3
+ *  0x3		     011		  GPIO Pin takes alternate function 4
+ *  0x2		     010		  GPIO Pin takes alternate function 5
+ *
+ */
+void set_gpio(uint8_t pin, uint8_t fsel){
+      
+        /* get base address (GPSEL0 to GPSEL5) using *(GPSEL + (pin/10))
+         * get mask using (alt << ((pin)%10)*3)
+         */
      
-         volatile uint32_t *gpsel = (uint32_t *)(GPSEL + (pin/10)); 	// get the GPSEL pointer (GPSEL0 ~ GPSEL5) based on the pin number selected
-        
-         uint32_t mask = ~ (7 <<  (pin % 10)*3); 			// mask to reset fsel to 0 first
-
-         *gpsel &= mask; 			 			// reset gpsel value to 0
-
-         mask = (fsel <<  ((pin) % 10)*3); 				// mask for new fsel value   
-
+         volatile uint32_t *gpsel = (uint32_t *)(GPSEL + (pin/10));  // get the GPSEL pointer (GPSEL0 ~ GPSEL5) based on the pin number selected
+         uint32_t mask = ~ (7 <<  (pin % 10)*3); 		     // mask to reset fsel to 0 first
+         *gpsel &= mask;   					     // reset gpsel value to 0
+         mask = (fsel <<  ((pin) % 10)*3);                           // mask for new fsel value   
   	 __sync_synchronize();
-         *gpsel |= mask; 						// write new fsel value to gpselect pointer
+         *gpsel |= mask; 					     // write new fsel value to gpselect pointer
          __sync_synchronize();
 }
 
-/* Sets a GPIO pin as input */
+/*
+ * Set a GPIO pin as input
+ */
 void gpio_input(uint8_t pin){
         set_gpio(pin, 0);
 } 
 
-/* Sets a GPIO pin as output */
+/*
+ * Set a GPIO pin as output
+ */
 void gpio_output(uint8_t pin){
   	set_gpio(pin, 1);
 }
 
 /*
- * Configure GPIO as input or output
+ * Configure GPIO pin as input or output
+ *
  * mode = 0 	input
  * mode = 1 	output
  * mode = 4 	alternate function 0 
@@ -415,7 +421,8 @@ void gpio_config(uint8_t pin, uint8_t mode) {
 }
 
 /*
- * Writes a bit value to change the state of a GPIO output pin
+ * Write a bit value to change the state of a GPIO output pin
+ *
  * bit = 0 OFF state
  * bit = 1 ON  state
  */
@@ -444,7 +451,8 @@ uint8_t gpio_write(uint8_t pin, uint8_t bit) {
 }
 
 /*
- * Reads the current state of a GPIO pin (input/output)
+ * Read the current state of a GPIO pin (input/output)
+ *
  * return value = 0 OFF state
  *	  value = 1 ON  state
  */
@@ -453,7 +461,9 @@ uint8_t gpio_read(uint8_t pin) {
 }
 
 
-/* Remove all configured event detection from a GPIO pin */
+/*
+ * Remove all configured event detection from a GPIO pin
+ */
 void gpio_reset_all_events (uint8_t pin) {
 	clearBit(GPREN, pin);
         mswait(1);
@@ -478,7 +488,9 @@ void gpio_reset_all_events (uint8_t pin) {
 
 ***************************/
 
-/* Enable High Level Event from a GPIO pin 
+/* 
+ * Enable High Level Event from a GPIO pin 
+ *
  * bit = 0 event detection is disabled or OFF
  * bit = 1 event detection is enabled or ON
  */
@@ -495,7 +507,9 @@ void gpio_enable_high_event (uint8_t pin, uint8_t bit) {
     	}
 }
 
-/* Enable Low Level Event from a GPIO pin
+/* 
+ * Enable Low Level Event from a GPIO pin
+ *
  * bit = 0 event detection is disabled or OFF
  * bit = 1 event detection is enabled or ON
  */
@@ -519,6 +533,7 @@ void gpio_enable_low_event (uint8_t pin, uint8_t bit) {
 ***************************/
 
 /* Enable Rising Event Detection
+ *
  * bit = 0 event detection is disabled or OFF
  * bit = 1 event detection is enabled or ON
  */
@@ -535,7 +550,9 @@ void gpio_enable_rising_event (uint8_t pin, uint8_t bit) {
     	}
 }
 
-/* Enable Falling Event Detection
+/* 
+ * Enable Falling Event Detection
+ *
  * bit = 0 event detection is disabled or OFF
  * bit = 1 event detection is enabled or ON
  */
@@ -552,7 +569,9 @@ void gpio_enable_falling_event (uint8_t pin, uint8_t bit) {
     	}
 }
 
-/* Enable Asynchronous Rising Event
+/* 
+ * Enable Asynchronous Rising Event
+ *
  * bit = 0 event detection is disabled or OFF
  * bit = 1 event detection is enabled or ON
  */
@@ -569,7 +588,9 @@ void gpio_enable_async_rising_event (uint8_t pin, uint8_t bit) {
     	}
 }
 
-/* Enable Asynchronous Falling Event
+/* 
+ * Enable Asynchronous Falling Event
+ *
  * bit = 0 event detection is disabled or OFF
  * bit = 1 event detection is enabled or ON
  */
@@ -587,19 +608,25 @@ void gpio_enable_async_falling_event (uint8_t pin, uint8_t bit) {
 }
 
 /*
- * Detect an input event from a GPIO pin.
+ * Detect an input event from a GPIO pin
+ *
  * The GPIO pin must be configured for a level or edge event detection.
  */
 uint8_t gpio_detect_input_event(uint8_t pin) { 
         return isBitSet(GPEDS, pin);
 }
 
-/* Reset input pin event when an event is detected (using gpio_detect_input_event() function). */  
+/*
+ * Reset input pin event when an event is detected
+ * (using gpio_detect_input_event() function)
+ */  
 void gpio_reset_event(uint8_t pin) {
    	setBit(GPEDS, pin);
 }
 
-/* Enable internal PULL-UP/PULL-DOWN resistor for input pin
+/*
+ * Enable internal PULL-UP/PULL-DOWN resistor for input pin
+ *
  * value = 0, 0x0 or 00b, Disable Pull-Up/Down, no PU/PD resistor will be used
  * value = 1, 0x1 or 01b, Enable Pull-Down resistor
  * value = 2, 0x2 or 10b, Enable Pull-Up resistor
@@ -689,9 +716,10 @@ void pwm_reset_pin(uint8_t pin){
 #define PLLD 	0x6
 
 /*
- * A quick check which clock generator is running (field name: SRC (bit 0 to 3) of CM_GP2CTL register)
+ * A quick check which clock generator is running
+ * (field name: SRC (bit 0 to 3) of CM_GP2CTL register)
  */
-static uint8_t get_clk_src(){
+uint8_t get_clk_src(){
     	/* mask for clk SRC value 4 bits (0 to 3 bit position)*/
     	uint32_t mask = 0x0000000F;
     	/* return clk SRC value w/ barrier */
@@ -699,7 +727,8 @@ static uint8_t get_clk_src(){
 }
 
 /*
- * A quick check if clock generator is running (field name: BUSY (bit 7) of CM_GP2CTL register)
+ * A quick check if clock generator is running
+ * (field name: BUSY (bit 7) of CM_GP2CTL register)
  */
 uint8_t clk_status(){
 	if(isBitSet(GPCTL, 7)){
@@ -712,7 +741,7 @@ uint8_t clk_status(){
 /*
  * Calculate clock freq based on divisor div value
  */
-static void set_clock_div(uint32_t div){
+void set_clock_div(uint32_t div){
 
     	/* disable PWM while performing clk operations */
     	clearBit(CTL, 0);
@@ -774,10 +803,11 @@ uint8_t pwm_set_clock_freq(uint32_t divider) {
 	PWM Operation functions
 
 ***************************************/
+
 /*
  * Monitor PWM status register and reset accordingly, internal use only.
  */
-static void reset_status_reg(){
+void reset_status_reg(){
 	
 	bool STA2 = isBitSet(STA, 10);
 	uswait(10); 
@@ -810,9 +840,10 @@ static void reset_status_reg(){
 }
 
 /*
- * Internal PWM Control Register utility function to Set and Clear bits based on Field Name (or Bit position).
+ * Set and Clear bits based on Field Name (or Bit position)
+ * (Internal PWM Control Register utility function)
  */
-static void pwm_reg_ctrl(uint8_t n, uint8_t position){
+void pwm_reg_ctrl(uint8_t n, uint8_t position){
 	if(n == 1){
   		setBit(CTL, position);
         }
@@ -825,7 +856,9 @@ static void pwm_reg_ctrl(uint8_t n, uint8_t position){
    	uswait(10); 
 }
 
-/* Enable/Disable PWM
+/* 
+ * Enable/Disable PWM
+ *
  * n = 0 Disable
  * n = 1 Enable
  */
@@ -845,7 +878,9 @@ void pwm_enable(uint8_t pin, uint8_t n){
         }
 }
 
-/* Enable PWM or M/S (mark/space)
+/* 
+ * Enable PWM or M/S (mark/space)
+ *
  * n = 0 PWM
  * n = 1 M/S
  */
@@ -865,7 +900,9 @@ void pwm_set_mode(uint8_t pin, uint8_t n){
         }
 }
 
-/* PWM output Reverse Polarity  (duty cycle inversion)
+/*
+ * PWM output Reverse Polarity  (duty cycle inversion)
+ *
  * n = 0 Normal
  * n = 1 Reverse
  */
@@ -885,7 +922,9 @@ void pwm_set_pola(uint8_t pin, uint8_t n){
         }
 }
 
-/* Sets PWM range data or period T of the pulse */
+/*
+ * Sets PWM range data or period T of the pulse
+ */
 void pwm_set_range(uint8_t pin, uint32_t range){
 
         // Channel 1
@@ -904,7 +943,9 @@ void pwm_set_range(uint8_t pin, uint32_t range){
         }
 }
 
-/* Sets PWM data or pulse width of the pulse to generate */
+/*
+ * Sets PWM data or pulse width of the pulse to generate
+ */
 void pwm_set_data(uint8_t pin, uint32_t data){
 
         // Channel 1
@@ -930,15 +971,19 @@ void pwm_set_data(uint8_t pin, uint32_t data){
 	I2C Functons
 
 *****************************/
-/* I2C register addresses 
-S 	(C + 0x4/4)  // status
-DLEN	(C + 0x8/4)  // data length
-A	(C + 0xC/4)  // slave
-FIFO	(C + 0x10/4) // fifo
-DIV	(C + 0x14/4) // div
-DEL	(C + 0x18/4) // data length
-CLKT	(C + 0x1C/4) //sretch clk
-*/
+
+/*
+ * I2C register addresses 
+ *
+ * S 	(C + 0x4/4)  // status
+ * DLEN	(C + 0x8/4)  // data length
+ * A	(C + 0xC/4)  // slave
+ * FIFO	(C + 0x10/4) // fifo
+ * DIV	(C + 0x14/4) // div
+ * DEL	(C + 0x18/4) // data length
+ * CLKT	(C + 0x1C/4) //sretch clk
+ *
+ */
 
 /* 
  * Start I2C operation
@@ -960,20 +1005,21 @@ int i2c_start()
     	return 1; 		// successful i2c initialization
 }
 
-/* 
-   Set falling and rising clock delay
-
-   The REDL field specifies the number core clocks to wait after the rising edge before
-   sampling the incoming data.
-
-   The FEDL field specifies the number core clocks to wait after the falling edge before
-   outputting the next data bit.
-
-   Note: Care must be taken in choosing values for FEDL and REDL as it is possible to
-   cause the BSC master to malfunction by setting values of CDIV/2 or greater. Therefore
-   the delay values should always be set to less than CDIV/2.
-*/
-static uint32_t set_clock_delay(uint8_t FEDL, uint8_t REDL){
+/*
+ * Set falling and rising clock delay
+ *
+ * The REDL field specifies the number core clocks to wait after the rising edge before
+ * sampling the incoming data.
+ *
+ * The FEDL field specifies the number core clocks to wait after the falling edge before
+ * outputting the next data bit.
+ *
+ * Note: Care must be taken in choosing values for FEDL and REDL as it is possible to
+ * cause the BSC master to malfunction by setting values of CDIV/2 or greater. Therefore
+ * the delay values should always be set to less than CDIV/2.
+ *
+ */
+uint32_t set_clock_delay(uint8_t FEDL, uint8_t REDL){
 
 	volatile uint16_t *div = (uint16_t *)DIV;
 
@@ -992,7 +1038,9 @@ static uint32_t set_clock_delay(uint8_t FEDL, uint8_t REDL){
     	return *del;
 }
 
-/* Set clock frequency for data transfer using a divisor value */
+/*
+ * Set clock frequency for data transfer using a divisor value
+ */
 void i2c_set_clock_freq(uint16_t divider)
 {
 	volatile uint32_t* div = (uint32_t *)DIV;
@@ -1005,7 +1053,9 @@ void i2c_set_clock_freq(uint16_t divider)
         }
 }
 
-/* Set data transfer speed using directly a clock freq value or baud rate value(bits per second) */
+/*
+ * Set data transfer speed using directly a clock freq value or baud rate value(bits per second)
+ */
 void i2c_data_transfer_speed(uint32_t baud)
 {
 	/* get the divisor value using the 250 MHz system clock source */
@@ -1014,23 +1064,29 @@ void i2c_data_transfer_speed(uint32_t baud)
 	i2c_set_clock_freq((uint16_t)divider);
 }
 
-/* Clear FIFO buffer */
-static void clear_fifo(volatile uint32_t * reg){
+/*
+ * Clear FIFO buffer
+ */
+void clear_fifo(volatile uint32_t * reg){
     	uint32_t mask = ~ (3 <<  4); // clear bit 4 and 5 to 0
     	*reg &= mask;	// set mask to value 0
     	mask = (3 <<  4); 	// write new value 2 or 1 for I2C or 3 to cover both I2C & SPI to reset FIFO   
     	*reg |= mask; 	// set mask to 2 and clear FIFO
 }
 
-/* Reset all status register error bits */
-static void reset_error_status(){
+/*
+ * Reset all status register error bits
+ */
+void reset_error_status(){
     	setBit(S, 9); // CLKT field bit
     	setBit(S, 8); // ERR field bit
     	setBit(S, 1); // DONE field bit
 }
 
-/* Slave device address write test, internal use only */
-static uint8_t i2c_slave_write_test(const char * buf, uint8_t len)
+/*
+ * Slave device address write test, internal use only
+ */
+uint8_t i2c_slave_write_test(const char * buf, uint8_t len)
 {
     	volatile uint32_t * dlen  = (uint32_t *)DLEN;
     	volatile uint32_t * fifo  = (uint32_t *)FIFO;
@@ -1079,7 +1135,9 @@ static uint8_t i2c_slave_write_test(const char * buf, uint8_t len)
 }
 
 
-/* Get slave device address */
+/*
+ * Get slave device address
+ */
 void i2c_select_slave(uint8_t addr)
 {
     	volatile uint32_t *a = (uint32_t *)A; 
@@ -1093,7 +1151,9 @@ void i2c_select_slave(uint8_t addr)
 	}
 }
 
-/* Write a number of bytes to slave device */
+/*
+ * Write a number of bytes to slave device
+ */
 uint8_t i2c_write(const char * wbuf, uint8_t len)
 {
     	volatile uint32_t * dlen   	= (uint32_t *)DLEN;
@@ -1167,7 +1227,9 @@ uint8_t i2c_write(const char * wbuf, uint8_t len)
     	return result;
 }
 
-/* Read a number of bytes from a slave device */
+/*
+ * Read a number of bytes from a slave device
+ */
 uint8_t i2c_read(char* rbuf, uint8_t len)
 {
     	volatile uint32_t * dlen 	= (uint32_t *)DLEN; 
@@ -1235,7 +1297,9 @@ uint8_t i2c_read(char* rbuf, uint8_t len)
     	return result;
 }
 
-/* Read one byte of data from the slave device */
+/*
+ * Read one byte of data from the slave device
+ */
 uint8_t i2c_byte_read(void){
 
     	volatile uint32_t * dlen 	= (uint32_t *)DLEN;
@@ -1306,7 +1370,7 @@ uint8_t i2c_byte_read(void){
 }
 
 /*
- * Stop I2C operation
+ * Stop I2C operation, reset pin as input
  */
 void i2c_stop() {
 
@@ -1328,14 +1392,17 @@ void i2c_stop() {
 	SPI Functons
 
 *****************************/
-/* SPI register addresses 
-SPI_CS 		(base_pointer[6] + 0x0)  
-SPI_FIFO	(SPI_CS + 0x4/4)
-SPI_CLK		(SPI_CS + 0x8/4)
-SPI_DLEN	(SPI_CS + 0xC/4)
-SPI_LTOH	(SPI_CS + 0x10/4)
-SPI_DC		(SPI_CS + 0x14/4)
-*/
+/* 
+ * SPI register addresses 
+ * 
+ * SPI_CS 	(base_pointer[6] + 0x0)  
+ * SPI_FIFO	(SPI_CS + 0x4/4)
+ * SPI_CLK	(SPI_CS + 0x8/4)
+ * SPI_DLEN	(SPI_CS + 0xC/4)
+ * SPI_LTOH	(SPI_CS + 0x10/4)
+ * SPI_DC	(SPI_CS + 0x14/4)
+ *
+ */
 
 /*
  * Start SPI operation
@@ -1387,7 +1454,6 @@ void spi_set_clock_freq(uint16_t divider){
     	*div = divider;
 }
 
-
 /*
  * Set SPI data mode
  *
@@ -1399,14 +1465,14 @@ void spi_set_clock_freq(uint16_t divider){
  */
 void spi_set_data_mode(uint8_t mode){
            
-        // alternative code
+        // alternate code
         /*
-    	volatile uint32_t* cs = (uint32_t *)SPI_CS;
-
-    	uint32_t mask = ~ (3 <<  2);	// clear bit position 2 and 3 first
-    	*cs &= mask;		  	// set mask to 0
-    	mask = (mode <<  2); 	  	// write mode value to set SPI data mode   
-    	*cs |= mask; 		  	// set data mode */
+    	  volatile uint32_t* cs = (uint32_t *)SPI_CS;
+    	  uint32_t mask = ~ (3 <<  2);	// clear bit position 2 and 3 first
+    	  *cs &= mask;		  	// set mask to 0
+    	  mask = (mode <<  2); 	  	// write mode value to set SPI data mode   
+    	  *cs |= mask; 		  	// set data mode
+        */
 
     	if(mode == 0){
     		clearBit(SPI_CS, 2); 	//CPHA 0
@@ -1478,8 +1544,9 @@ void spi_set_chip_select_polarity(uint8_t cs, uint8_t active)
     	}
 }
 
-
-/* Writes and reads a number of bytes to/from a slave device */
+/*
+ * Writes and reads a number of bytes to/from a slave device
+ */
 void spi_data_transfer(char* wbuf, char* rbuf, uint8_t len)
 {
 	volatile uint32_t* fifo = (uint32_t *)SPI_FIFO;
@@ -1525,7 +1592,9 @@ void spi_data_transfer(char* wbuf, char* rbuf, uint8_t len)
     	}
 }
 
-/* Writes a number of bytes to SPI device */
+/*
+ * Writes a number of bytes to SPI device
+ */
 void spi_write(char* wbuf, uint8_t len)
 {
     	volatile uint32_t* fifo = (uint32_t *)SPI_FIFO;
@@ -1547,10 +1616,11 @@ void spi_write(char* wbuf, uint8_t len)
            		i++;
          	}
     	}
-    
 }
 
-/* read a number of bytes from SPI device */
+/*
+ * read a number of bytes from SPI device
+ */
 void spi_read(char* rbuf, uint8_t len)
 {
     	volatile uint32_t* fifo = (uint32_t *)SPI_FIFO;
@@ -1579,5 +1649,6 @@ void spi_read(char* rbuf, uint8_t len)
     	/* Set TA = 0, transfer is done */
     	clearBit(SPI_CS, 7);
 }
+
 
 
