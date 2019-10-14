@@ -232,7 +232,9 @@ void rpi_init(int access) {
 		perror("fd close");
 }
 
-/* Close the library and reset all memory pointers to 0 or NULL */
+/* 
+ * Close the library and reset all memory pointers to 0 or NULL
+ */
 uint8_t rpi_close()
 {
         int i;
