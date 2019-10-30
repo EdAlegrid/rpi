@@ -24,11 +24,11 @@ $ git clone https://github.com/EdAlegrid/rpi
 Compile the rpi source code and create an object file within the obj folder. 
 ```console
 $ cd rpi
-$ gcc -Wall -pedantic -c src/rpi.c -o obj/rpi.o -std=c11
+$ gcc -Wall -pedantic -c src/rpi.c -o obj/rpi.o
 ```
 Compile the sample applications (pwm.c, event.c, i2c.c and spi.c). This process will link the source applications with the rpi object code to create a binary executable file.   
 ```console
-$ gcc -Wall -pedantic pwm.c obj/rpi.o -o pwm -std=c11
+$ gcc -Wall -pedantic pwm.c obj/rpi.o -o pwm
 ```
 
 Run the application.
