@@ -30,7 +30,7 @@ In your Raspberry Pi, clone the rpi repository.
 $ git clone https://github.com/EdAlegrid/rpi
 ```
 
-Go inside the directory to compile the library and your applicaions.
+Go inside the directory to compile the library and the sample application.
 ```console
 $ cd rpi
 ```
