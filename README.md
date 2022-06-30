@@ -34,7 +34,7 @@ $ gcc -Wall -pedantic -c src/rpi.c -o obj/rpi.o
 ```
 Compile the sample applications (gpio.c, pwm.c, i2c.c and others).
 
-e.g. Compiling the pwm.c ...
+**e.g.** compiling the pwm.c ...
 ```console
 $ gcc -Wall -pedantic pwm.c obj/rpi.o -o pwm
 ```
