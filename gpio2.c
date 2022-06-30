@@ -13,6 +13,7 @@
  *
  * dtoverlay=gpio-no-irq
  *
+ *
  * Reboot your system.
  *
  * This will disable GPIO interrupts and avoids crashes with newer kernels when using edge interrupts.
