@@ -1,8 +1,10 @@
 # rpi
 
-Rpi is a lightweight C library for Raspberry Pi using direct register control.
+Rpi is a lightweight and simple C library for Raspberry Pi using direct register control.
 
 It maps the peripheral registers in memory using */dev/mem* for PWM, I2C, SPI and */dev/gpiomem* for GPIO control.
+
+It is mainly used for **iiot** and **m2m** applications. 
 
 ### Supports the following ARM peripherals
 
