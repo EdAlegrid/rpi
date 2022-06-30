@@ -32,7 +32,9 @@ Compile the rpi source code and create an object file within the obj folder.
 $ cd rpi
 $ gcc -Wall -pedantic -c src/rpi.c -o obj/rpi.o
 ```
-Compile the sample applications (pwm.c, event.c, i2c.c and spi.c). This process will link the source applications with the rpi object code to create a binary executable file.   
+Compile the sample applications (gpio.c, pwm.c, i2c.c and others).
+
+e.g. Compiling the pwm.c ...
 ```console
 $ gcc -Wall -pedantic pwm.c obj/rpi.o -o pwm
 ```
