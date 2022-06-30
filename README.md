@@ -29,9 +29,14 @@ In your Raspberry Pi, clone the rpi repository.
 ```console
 $ git clone https://github.com/EdAlegrid/rpi
 ```
-Compile the rpi source code and create an object file within the obj folder. 
+
+Go inside the directory.
 ```console
 $ cd rpi
+```
+
+Compile the rpi source code and create an object file within the obj folder. 
+```console
 $ gcc -Wall -pedantic -c src/rpi.c -o obj/rpi.o
 ```
 Compile the sample applications (gpio.c, pwm.c, i2c.c and others).
