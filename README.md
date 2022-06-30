@@ -13,17 +13,17 @@ It is mainly used for **iiot** and **m2m** applications.
 * I2C (master)  
 * SPI
 
-## Supported Raspberry Pi Devices
+# Supported Raspberry Pi Devices
 * Model: Pi Zero & Zero W, Pi Zero 2 W, Pi 3 Model B+, Pi 4 Model B, Compute Module 3 & 4 (Generally most of the 40-pin models)
 
-## Supported OS
+# Supported OS
 Tried and tested on the following OS
 - Raspbian
 - Raspberry Pi OS (32 and 64-bit)
 - 64-bit Ubuntu 20+ (Only GPIO peripheral is supported)
 
 
-## Setup Guide
+# Setup Guide
 ### Download the repo
 In your Raspberry Pi, clone the rpi repository.
 ```console
@@ -40,7 +40,7 @@ Compile the rpi source code and create an object file within the obj folder.
 $ gcc -Wall -pedantic -c src/rpi.c -o obj/rpi.o
 ```
 
-### Compile the applications
+### Compile your application
 Compile the sample applications (gpio.c, pwm.c, i2c.c and others).
 
 **e.g.** compiling the pwm.c ...
@@ -53,6 +53,6 @@ Run the application.
 $ sudo ./pwm
 ```
 
-## License
+# License
 
 GNU General Public License v3.0
