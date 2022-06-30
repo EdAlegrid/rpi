@@ -1,6 +1,8 @@
 # rpi
 
-Rpi is a lightweight C library for Raspberry Pi using direct register control. It maps peripheral registers in memory using /dev/mem for PWM, I2C, SPI and /dev/gpiomem for GPIO control.
+Rpi is a lightweight C library for Raspberry Pi using direct register control.
+
+It maps the peripheral registers in memory using */dev/mem* for PWM, I2C, SPI and */dev/gpiomem* for GPIO control.
 
 #### Supports the following ARM peripherals
 
@@ -9,11 +11,15 @@ Rpi is a lightweight C library for Raspberry Pi using direct register control. I
 * I2C (master)  
 * SPI
 
-## Compatibility
+### Supported Raspberry Pi Devices
+* Model: Pi Zero & Zero W, Pi Zero 2 W, Pi 3 Model B+, Pi 4 Model B, Compute Module 3 & 4 (Generally most of the 40-pin models)
 
-This library will generally work for all Raspberry Pi 40-pin models. 
+### Supported OS
+Tried and tested on the following OS
+- Raspbian
+- Raspberry Pi OS (32 and 64-bit)
+- 64-bit Ubuntu 20+ (Only GPIO peripheral is supported)
 
-* Raspberry Pi Models: B+, 2, 3, 4, Zero & Zero W.
 
 ## Setup Guide
 
