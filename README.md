@@ -24,7 +24,7 @@ Tried and tested on the following OS
 
 
 ## Setup Guide
-
+### Download the repo
 In your Raspberry Pi, clone the rpi repository.
 ```console
 $ git clone https://github.com/EdAlegrid/rpi
@@ -34,11 +34,13 @@ Go inside the directory.
 ```console
 $ cd rpi
 ```
-
+### Compile the library
 Compile the rpi source code and create an object file within the obj folder. 
 ```console
 $ gcc -Wall -pedantic -c src/rpi.c -o obj/rpi.o
 ```
+
+### Compile the applications
 Compile the sample applications (gpio.c, pwm.c, i2c.c and others).
 
 **e.g.** compiling the pwm.c ...
