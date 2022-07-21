@@ -26,9 +26,7 @@
 #include <stdint.h>
 #include <signal.h>
 
-//#include "rpi.h"
 #include "./src/rpi.h" // event2.c in root folder
-//#include "../src/rpi.h"  // event2.c in /app folder
 
 /**
  GPIO Pin to PHY Pin (board header pin number)
