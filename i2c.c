@@ -56,6 +56,7 @@ int8_t getTemp(void){
 }
 
 void monitor_temp(void){
+	
 	puts("\nMonitor temp every 2 secs ...");
 	
 	/* access config register */ 
