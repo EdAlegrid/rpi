@@ -56,16 +56,6 @@ int8_t getTemp(void){
 }
 
 void monitor_temp(void){
-
-	/* start i2c operation, SDA and SCL pins setup */ 
-	i2c_start();
- 
-        /* set data transfer speed */ 
-	i2c_data_transfer_speed(400000); // 400 kHz
-
-	/* access temp sensor device */   
-    	i2c_select_slave(0x18);
-       	
 	puts("\nMonitor temp every 2 secs ...");
 	
 	/* access config register */ 
@@ -124,6 +114,15 @@ int main(void){
 	signal(SIGINT, sighandler);
   
     	rpi_init(1);
+	
+	/* start i2c operation, SDA and SCL pins setup */ 
+	i2c_start();
+	
+	/* access temp sensor device */   
+    	i2c_select_slave(0x18);
+ 
+        /* set data transfer speed */ 
+	i2c_data_transfer_speed(400000); // 400 kHz
  
   	puts("*** Monitor Ambient Temp Using I2C MCP9808 ***");
 	
