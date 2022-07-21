@@ -113,6 +113,7 @@ int main(void){
  
 	signal(SIGINT, sighandler);
   
+	/* initialize rpi library */ 
     	rpi_init(1);
 	
 	/* start i2c operation, SDA and SCL pins setup */ 
