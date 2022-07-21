@@ -63,7 +63,7 @@ int main(void){
  
 	signal(SIGINT, sighandler);
   
-  	puts("initializing rpi ...");
+  	puts("Initializing rpi ...");
   	rpi_init(0);
   
         /* set statusPin to GPIO output */
@@ -78,7 +78,7 @@ int main(void){
 	gpio_config(inputPin1, 0);
         gpio_config(inputPin2, 0);
 
-    	puts("input event detection loop is running ...");
+    	puts("GPIO Input event detection loop is running ...");
   	while(1) {
 
     		gpio_write(statusPin, 1);
@@ -95,7 +95,7 @@ int main(void){
       			gpio_write(outputPin, 0);
     		}
 
-                /* status LED will blink, indicates loop is running */
+                /* status LED will continously blink indicating the loop is running */
     		mswait(200);
     		gpio_write(statusPin, 0);
     		mswait(200);
