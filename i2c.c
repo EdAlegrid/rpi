@@ -35,14 +35,16 @@ int8_t getTemp(void){
         float LowerByte = rbuf[1];
  
         /* Convert the temperature data */
-	UpperByte = UpperByte & 0x1F;	 //Clear flag bits
+	UpperByte = UpperByte & 0x1F;	 // Clear flag bits
 
-	if ((UpperByte & 0x10) == 0x10){ //TA < 0°C
-		UpperByte = UpperByte & 0x0F; //Clear SIGN
+	// TA < 0°C
+	if ((UpperByte & 0x10) == 0x10){
+		UpperByte = UpperByte & 0x0F; // Clear SIGN
 		Temp = 256 - ((UpperByte * 16) + ((float)(LowerByte/16)));
 
 	}
-	else { 				 //TA ³ 0°C
+	// TA > 0°C	
+	else {
                 float lb = (LowerByte/16);
  		Temp = ((UpperByte * 16) + lb);
 	}
@@ -52,7 +54,7 @@ int8_t getTemp(void){
         return Temp;
 }
 
-void mcp9808(void){
+void monitor_temp(void){
 
 	/* start i2c operation, SDA and SCL pins setup */ 
 	i2c_start();
@@ -62,8 +64,8 @@ void mcp9808(void){
 
 	/* access temp sensor device */   
     	i2c_select_slave(0x18);
-    
-   	puts("\n*** Monitor Ambient Temp Using I2C MCP9808 ***");
+       	
+	puts("\nMonitor temp every 2 secs ...");
 	
 	/* access config register */ 
         wbuf[0] = 0x01;  	// address of config register
@@ -122,10 +124,10 @@ int main(void){
   
     	rpi_init(1);
  
-  	puts("Monitor temperature every 2 secs ...");
+  	puts("*** Monitor Ambient Temp Using I2C MCP9808 ***");
 	
   	while(1) {
-		mcp9808();
+		monitor_temp();
                 mswait(2000);
 	}
 }
