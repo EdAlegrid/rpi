@@ -15,7 +15,8 @@
 /**
  * Circuit Setup
  *
- * Connect the i2c MCP9808 chip to RPi based on datasheet. 
+ * Connect the i2c MCP9808 chip to RPi using pins GPIO02/GPIO03 (pin 03/05). 
+ *
  * We will use the default slave address of 0x18.
  */
 
