@@ -25,7 +25,7 @@ char rbuf[16];
 /* i2c write buffer */
 char wbuf[16];
 
-/* ambient temperature reading based on datasheet */
+/* read ambient temperature based on datasheet */
 int8_t getTemp(void){
 
         float Temp;
@@ -63,7 +63,7 @@ void mcp9808(void){
 	/* access temp sensor device */   
     	i2c_select_slave(0x18);
     
-   	puts("\n*** I2C MCP9808 Temp ***");
+   	puts("\n*** Monitor Ambient Temp Using I2C MCP9808 ***");
 	
 	/* access config register */ 
         wbuf[0] = 0x01;  	// address of config register
@@ -122,7 +122,8 @@ int main(void){
   
     	rpi_init(1);
  
-  	puts("starting i2c loop operation ...");
+  	puts("Monitor temperature every 2 secs ...");
+	
   	while(1) {
 		mcp9808();
                 mswait(2000);
