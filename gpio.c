@@ -30,7 +30,7 @@
  */
 
 /* input pins */
-uint8_t inputPin = 17;  //switch to turn ON  LED output
+uint8_t inputPin1 = 17;  //switch to turn ON  LED output
 uint8_t inputPin2 = 27; //switch to turn OFF LED output
 
 /* output pins */
@@ -41,7 +41,7 @@ uint8_t statusPin = 20; //LED status indicator
 void sighandler(int signum)
 {
    	printf("\nsighandler invoked %d, exiting ...\n", signum);
-	gpio_reset_all_events(inputPin);
+	gpio_reset_all_events(inputPin1);
         gpio_reset_all_events(inputPin2);
 
         gpio_write(statusPin, 0);  //turn OFF
@@ -75,7 +75,7 @@ int main(void){
   	gpio_write(outputPin, 0);
 
         /* set inputPin and inputPin2 to GPIO inputs */
-	gpio_config(inputPin, 0);
+	gpio_config(inputPin1, 0);
         gpio_config(inputPin2, 0);
 
     	puts("input event detection loop is running ...");
@@ -84,7 +84,7 @@ int main(void){
     		gpio_write(statusPin, 1);
 
                 /* press inputPin switch to turn ON LED output */
-    		if(gpio_read(inputPin)){
+    		if(gpio_read(inputPin1)){
 			puts("turning ON  outputPin ...");
       			gpio_write(outputPin, 1);
     		}
