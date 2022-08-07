@@ -30,12 +30,12 @@
  */
 
 /* input pins */
-uint8_t inputPin1 = 17;  //switch to turn ON  LED output
-uint8_t inputPin2 = 27; //switch to turn OFF LED output
+uint8_t inputPin1 = 17;		//switch to turn ON  LED output
+uint8_t inputPin2 = 27;		//switch to turn OFF LED output
 
 /* output pins */
-uint8_t outputPin = 13; //LED output
-uint8_t statusPin = 20; //LED status indicator
+uint8_t outputPin = 13;		//LED output
+uint8_t statusPin = 20;		//LED status indicator
 
 /* Ctrl-C handler */
 void sighandler(int signum)
