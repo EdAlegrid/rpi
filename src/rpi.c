@@ -581,6 +581,18 @@ uint8_t gpio_write(uint8_t pin, uint8_t bit) {
 	return bit; 
 }
 
+/* Turn ON a GPIO pin
+ */
+void gpio_on(uint8_t pin){
+	gpio_write(pin, 1);
+}
+
+/* Turn OFF a GPIO pin
+ */
+void gpio_off(uint8_t pin){
+	gpio_write(pin, 0);
+}
+
 /* Read the current state of a GPIO pin (input/output)
  *
  * return value
@@ -1521,7 +1533,7 @@ void i2c_stop() {
 /* Start SPI operation */
 int spi_start()
 {
-    //rpi_init(1);
+    	//rpi_init(1);
 	//mswait(25);
 
 	__sync_synchronize(); 
