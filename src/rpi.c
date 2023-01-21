@@ -593,6 +593,16 @@ void gpio_off(uint8_t pin){
 	gpio_write(pin, 0);
 }
 
+/* Create a simple sing-shot pulse
+ *
+ * td as time duration or period of the pulse 
+ */
+void gpio_pulse(uint8_t pin, int td){
+	gpio_on(pin); 
+	mswait(td);
+	gpio_off(pin);  
+}
+
 /* Read the current state of a GPIO pin (input/output)
  *
  * return value
