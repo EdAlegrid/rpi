@@ -49,6 +49,8 @@ void gpio_on(uint8_t pin);
 
 void gpio_off(uint8_t pin);
 
+void gpio_pulse(uint8_t pin, int td);
+
 void gpio_reset_all_events(uint8_t pin);
 
 void gpio_enable_high_event(uint8_t pin, uint8_t bit);
