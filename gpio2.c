@@ -39,17 +39,17 @@
 /**
  * Circuit Setup
  *
- * Connect momentary switch buttons to inputPin (pin 11) and inputPin2 (pin 13).
- * Connect LED's to outputPin (pin 33) and statusPin (pin 38).
+ * Connect momentary switch buttons to inputPin1 GPIO 17(pin 11) and inputPin2 GPIO 27(pin 13).
+ * Connect LED's to outputPin GPIO 13(pin 33) and statusPin GPIO 20(pin 38).
  */
 
 /* input pins */
-uint8_t inputPin1 = 17;  //switch to turn ON  LED output
-uint8_t inputPin2 = 27;  //switch to turn OFF LED output
+uint8_t inputPin1 = 17;  // switch to turn ON  LED output
+uint8_t inputPin2 = 27;  // switch to turn OFF LED output
 
 /* output pins */
-uint8_t outputPin = 13; //LED output
-uint8_t statusPin = 20; //LED status indicator
+uint8_t outputPin = 13; // LED output
+uint8_t statusPin = 20; // LED status indicator
 
 /* Ctrl-C handler */
 void sighandler(int signum)
@@ -58,10 +58,10 @@ void sighandler(int signum)
 	gpio_reset_all_events(inputPin1);
     	gpio_reset_all_events(inputPin2);
 
-    	gpio_write(statusPin, 0);  //turn OFF
-    	gpio_config(statusPin, 0); //set to GPIO input
-	gpio_write(outputPin, 0);  //turn OFF
-    	gpio_config(outputPin, 0); //set to GPIO input
+    	gpio_write(statusPin, 0);  // turn OFF statusPin
+    	gpio_config(statusPin, 0); // set to GPIO input
+	gpio_write(outputPin, 0);  // turn OFF outputPin
+    	gpio_config(outputPin, 0); // set to GPIO input
 
     	puts("Closing rpi ...");
    	rpi_close();
@@ -84,7 +84,7 @@ int main(void){
   	/* set outputPin initial state to OFF */
   	gpio_write(outputPin, 0);
 
-    	/* set inputPin and inputPin2 to GPIO inputs */
+    	/* set inputPin1 and inputPin2 to GPIO inputs */
 	gpio_config(inputPin1, 0);
     	gpio_config(inputPin2, 0);
 
@@ -92,14 +92,18 @@ int main(void){
   	gpio_reset_all_events(inputPin1);
   	gpio_reset_all_events(inputPin2);
 
-  	/* enable async_rising edge detection event */
+  	/* enable async_rising edge detection event on input pins */
   	gpio_enable_async_rising_event(inputPin1, 1);
   	gpio_enable_async_rising_event(inputPin2, 1);
 
+	// Press Ctrl-C to exit the loop 
+	
   	puts("Starting GPIO Input Pin Event Detection loop ...");
   	while(1) {
-    		gpio_write(statusPin, 1);
-        	/* press inputPin switch to turn ON LED output */
+		
+    		gpio_write(statusPin, 1); // turn ON status pin to indicate loop is running 
+		
+        	/* press inputPin1 switch to turn ON LED output */
     		if(gpio_detect_input_event(inputPin1)){
 			puts("turning ON  outputPin ...");
       			gpio_write(outputPin, 1);
